@@ -109,7 +109,7 @@ defmodule Boltex.Bolt do
   end
 
   @doc """
-  Runs a statement (most like Cypher statement) and returns a list of the
+  Runs a statement (most likely Cypher statement) and returns a list of the
   records and a summary.
 
   Records are represented using PackStream's record data type. Their Elixir
@@ -119,7 +119,7 @@ defmodule Boltex.Bolt do
 
       iex> Boltex.Bolt.run_statement("MATCH (n) RETURN n")
       [
-        {:record, [sig: 1, fields: [1, "Exmaple", "Labels", %{"some_attribute" => "some_value"},
+        {:record, [sig: 1, fields: [1, "Exmaple", "Labels", %{"some_attribute" => "some_value"}]]},
         {:success, %{"type" => "r"}}
       ]
   """
