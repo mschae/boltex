@@ -19,6 +19,12 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
           [applications: [:boltex]]
         end
 
+## Try it out!
+
+```elixir
+Boltex.test 'localhost', 7687, "MATCH (n) RETURN n"
+```
+
 ## Todo
 
 - [x] PackStream decoding
