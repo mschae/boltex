@@ -61,7 +61,7 @@ defimpl Boltex.PackStream.Encoder, for: List do
   def encode(list) do
     binary = Enum.map_join list, &Boltex.PackStream.Encoder.encode/1
 
-    do_encode binary, byte_size(binary)
+    do_encode binary, length(list)
   end
 
   defp do_encode(binary, list_size) when list_size <= 15 do
