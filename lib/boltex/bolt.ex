@@ -48,8 +48,20 @@ defmodule Boltex.Bolt do
 
   @doc """
   Initialises the connection.
+
+  Expects a transport module (i.e. `gen_tcp`) and a `Port`. Accepts
+  authorisation params in the form of {username, password}.
+
+  ## Examples
+
+      iex> Boltex.Bolt.init :gen_tcp, port
+      :ok
+
+      iex> Boltex.Bolt.init :gen_tcp, port, {"username", "password"}
+      :ok
   """
-  def init(transport, port, params \\ %{}) do
+  def init(transport, port, auth \\ nil) do
+    params = auth_params auth
     send_messages transport, port, [{[@user_agent, params], @sig_init}]
 
     case receive_data(transport, port) do
@@ -60,6 +72,15 @@ defmodule Boltex.Bolt do
         Logger.error "Init failed. Received: #{Utils.hex_encode response})"
         {:error, :init_failed}
     end
+  end
+
+  defp auth_params(nil), do: %{}
+  defp auth_params({username, password}) do
+    %{
+      scheme: "basic",
+      principal: username,
+      credentials: password
+    }
   end
 
   @doc """
