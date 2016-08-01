@@ -33,9 +33,10 @@ Boltex.test 'localhost', 7687, "MATCH (n) RETURN n"
 - [x] PackStream encoding
 - [x] Bolt message receiving
 - [x] Bolt message sending
-- [ ] Auth
+- [x] Auth
 - [ ] Transport adapter (e.g. plain `:gen_tcp`, `DBConnection`, ...)
 - [ ] Handle failures gracefully
+- [ ] SSL
 
 ## License
 
