@@ -150,8 +150,8 @@ defmodule Boltex.Bolt do
       {[nil], @sig_pull_all}
     ]
 
-    with {:success, %{}} <- receive_data(transport, port),
-    do:  receive_data transport, port
+    with {:success, %{}} = data <- receive_data(transport, port),
+    do:  [data | receive_data(transport, port) |> List.wrap]
   end
 
   @doc """
