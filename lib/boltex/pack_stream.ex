@@ -51,40 +51,40 @@ defmodule Boltex.PackStream do
   end
 
   # Lists
-  # FIXME: Make sure list size is correct, only collect items within list-size.
-  def decode(<< 0x9 :: 4, _list_size :: 4, list :: binary >>), do: [decode list]
-  def decode(<< 0xD4, _list_size :: 8, list :: binary >>),     do: [decode list]
-  def decode(<< 0xD5, _list_size :: 16, list :: binary >>),    do: [decode list]
-  def decode(<< 0xD6, _list_size :: 32, list :: binary >>),    do: [decode list]
-  def decode(<< 0xD7, list :: binary >>) do
+  def decode(<< 0x9 :: 4, list_size :: 4  >> <> bin), do: list(bin, list_size)
+  def decode(<< 0xD4,     list_size :: 8  >> <> bin), do: list(bin, list_size)
+  def decode(<< 0xD5,     list_size :: 16 >> <> bin), do: list(bin, list_size)
+  def decode(<< 0xD6,     list_size :: 32 >> <> bin), do: list(bin, list_size)
+  def decode(<< 0xD7 >> <> bin) do
     position =
-      for(<<byte <- list>>, do: byte)
+      for(<< byte <- bin >>, do: byte)
       |> Enum.find_index(&(&1 == 0xDF))
 
-    << list :: binary-size(position), 0xDF, rest :: binary >> = list
+    << list :: binary-size(position), 0xDF, rest :: binary >> = bin
 
     [decode(list) | decode(rest)]
   end
 
   # Maps
-  # FIXME: Make sure map size is correct, only collect items within map-size.
-  def decode(<< 0xA :: 4, _entries :: 4, map :: binary>>), do: decode_map(map)
-  def decode(<< 0xD8, _entries, map :: binary >>),          do: decode_map(map)
-  def decode(<< 0xD9, _entries :: 16, map :: binary >>),    do: decode_map(map)
-  def decode(<< 0xDA, _entries :: 32, map :: binary >>),    do: decode_map(map)
-  def decode(<< 0xDB, map :: binary >>) do
+  def decode(<< 0xA :: 4, entries :: 4 >>  <> bin), do: map(bin, entries)
+  def decode(<< 0xD8,     entries :: 8 >>  <> bin), do: map(bin, entries)
+  def decode(<< 0xD9,     entries :: 16 >> <> bin), do: map(bin, entries)
+  def decode(<< 0xDA,     entries :: 32 >> <> bin), do: map(bin, entries)
+  def decode(<< 0xDB >> <> bin) do
     position =
-      for(<<byte <- map>>, do: byte)
+      for(<< byte <- bin >>, do: byte)
       |> Enum.find_index(&(&1 == 0xDF))
 
-    << map:: binary-size(position), 0xDF, rest :: binary >> = map
+    << map:: binary-size(position), 0xDF, rest :: binary >> = bin
 
-    decode_map(map) ++ decode(rest)
+    (map |> decode |> to_map) ++ decode(rest)
   end
 
   # Struct
-  def decode(<< 0xB :: 4, _struct_size :: 4, sig :: 8>> <> struct) do
-    [sig: sig, fields: decode(struct)]
+  def decode(<< 0xB :: 4, struct_size :: 4, sig :: 8>> <> struct) do
+    {struct, rest} = struct |> decode |> Enum.split(struct_size)
+
+    [[sig: sig, fields: struct] | rest]
   end
 
   def decode(<<0, 0>>), do: []
@@ -103,11 +103,20 @@ defmodule Boltex.PackStream do
     [string | decode(rest)]
   end
 
-  defp decode_map(map) do
-    decode(map)
+  defp map(map, entries) do
+    {map, rest} = map |> decode |> Enum.split(entries * 2)
+
+    [to_map(map) | rest]
+  end
+  defp to_map(map) do
+    map
     |> Enum.chunk(2)
     |> Enum.map(&List.to_tuple/1)
-    |> Enum.into(%{})
-    |> List.wrap
+    |> Map.new
+  end
+
+  defp list(list, list_size) do
+    {list, rest} = list |> decode |> Enum.split(list_size)
+    [list | rest]
   end
 end
