@@ -30,13 +30,13 @@ defimpl Boltex.PackStream.Encoder, for: Integer do
     << 0xC8, integer >>
   end
   def encode(integer) when integer in @int16_low  or integer in @int16_high do
-    << 0xC9, integer >>
+    << 0xC9, integer :: 16 >>
   end
   def encode(integer) when integer in @int32_low  or integer in @int32_high do
-    << 0xCA, integer >>
+    << 0xCA, integer :: 32 >>
   end
   def encode(integer) when integer in @int64_low  or integer in @int64_high do
-    << 0xCB, integer >>
+    << 0xCB, integer :: 64 >>
   end
 end
 
