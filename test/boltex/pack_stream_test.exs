@@ -26,7 +26,7 @@ defmodule Boltex.PackStreamTest do
     assert PackStream.encode(0)   == << 0x00 >>
     assert PackStream.encode(42)  == << 0x2A >>
     assert PackStream.encode(-42) == << 0xC8, 0xD6 >>
-    assert PackStream.encode(420) == << 0xC9, 0xA4 >>
+    assert PackStream.encode(420) == << 0xC9, 0x01, 0xA4 >>
   end
 
   test "encodes string" do
