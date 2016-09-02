@@ -11,6 +11,6 @@ defmodule Boltex.Utils do
 
   def hex_decode(hex_list) do
     integers = for(hex <- hex_list, do: hex |> Integer.parse(16) |> elem(0))
-    reduce_to_binary integer, &<<&1>>
+    reduce_to_binary integers, &<<&1>>
   end
 end
