@@ -1,4 +1,10 @@
 defmodule Boltex do
+  @moduledoc """
+  Elixir library for using the Neo4J Bolt Protocol.
+
+  It supports de- and encoding of Boltex binaries and sending and receiving
+  of data using the Bolt protocol.
+  """
   alias Boltex.Bolt
 
   def test(host, port, query, params \\ %{}, auth \\ nil) do
@@ -7,7 +13,7 @@ defmodule Boltex do
     :ok        = Bolt.handshake :gen_tcp, p
     :ok        = Bolt.init :gen_tcp, p, auth
 
-    IO.inspect Bolt.run_statement(:gen_tcp, p, query)
+    Bolt.run_statement(:gen_tcp, p, query)
   end
 
 end

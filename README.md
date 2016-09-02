@@ -1,5 +1,7 @@
 # Boltex
 [![Build Status](https://travis-ci.org/mschae/boltex.svg?branch=master)](https://travis-ci.org/mschae/boltex)
+[![Inline docs](http://inch-ci.org/github/mschae/boltex.svg?branch=master)](http://inch-ci.org/github/mschae/boltex)
+
 
 Elixir implementation of the Bolt protocol and corresponding PackStream
 protocol. Both is being used by Neo4J.

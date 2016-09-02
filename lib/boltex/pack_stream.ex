@@ -56,9 +56,8 @@ defmodule Boltex.PackStream do
   def decode(<< 0xD5,     list_size :: 16 >> <> bin), do: list(bin, list_size)
   def decode(<< 0xD6,     list_size :: 32 >> <> bin), do: list(bin, list_size)
   def decode(<< 0xD7 >> <> bin) do
-    position =
-      for(<< byte <- bin >>, do: byte)
-      |> Enum.find_index(&(&1 == 0xDF))
+    bytes    = for(<< byte <- bin >>, do: byte)
+    position = Enum.find_index bytes, &(&1 == 0xDF)
 
     << list :: binary-size(position), 0xDF, rest :: binary >> = bin
 
@@ -71,9 +70,8 @@ defmodule Boltex.PackStream do
   def decode(<< 0xD9,     entries :: 16 >> <> bin), do: map(bin, entries)
   def decode(<< 0xDA,     entries :: 32 >> <> bin), do: map(bin, entries)
   def decode(<< 0xDB >> <> bin) do
-    position =
-      for(<< byte <- bin >>, do: byte)
-      |> Enum.find_index(&(&1 == 0xDF))
+    bytes    = for(<< byte <- bin >>, do: byte)
+    position = Enum.find_index bytes, &(&1 == 0xDF)
 
     << map:: binary-size(position), 0xDF, rest :: binary >> = bin
 

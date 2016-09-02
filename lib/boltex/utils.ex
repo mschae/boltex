@@ -1,4 +1,6 @@
 defmodule Boltex.Utils do
+  @moduledoc "Different utils used to debugging and helping."
+
   def reduce_to_binary(enumerable, transform) do
     Enum.reduce enumerable, <<>>, fn(data, acc) -> acc <> transform.(data) end
   end
@@ -8,7 +10,7 @@ defmodule Boltex.Utils do
   end
 
   def hex_decode(hex_list) do
-    for(hex <- hex_list, do: Integer.parse(hex, 16) |> elem(0))
-    |> reduce_to_binary(&<<&1>>)
+    integers = for(hex <- hex_list, do: hex |> Integer.parse(16) |> elem(0))
+    reduce_to_binary integer, &<<&1>>
   end
 end

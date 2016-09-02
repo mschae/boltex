@@ -89,7 +89,8 @@ defmodule Boltex.Bolt do
   Messages have to be in the form of {[messages], signature}.
   """
   def send_messages(transport, port, messages) do
-    Enum.map(messages, &generate_binary_message/1)
+    messages
+    |> Enum.map(&generate_binary_message/1)
     |> generate_chunks
     |> Enum.each(&(transport.send(port, &1)))
   end
@@ -151,7 +152,7 @@ defmodule Boltex.Bolt do
     ]
 
     with {:success, %{}} = data <- receive_data(transport, port),
-    do:  [data | receive_data(transport, port) |> List.wrap]
+    do:  [data | transport |> receive_data(port) |> List.wrap]
   end
 
   @doc """
@@ -178,7 +179,7 @@ defmodule Boltex.Bolt do
   * `:failure`
   """
   def receive_data(transport, port, previous \\ []) do
-    case do_receive_data(transport, port) |> unpack do
+    case transport |> do_receive_data(transport) |> unpack do
       {:record, _} = data ->
         receive_data transport, port, [data | previous]
 
@@ -207,7 +208,6 @@ defmodule Boltex.Bolt do
       {:error, :timeout} ->
         {:error, :no_more_data_received}
       other ->
-        IO.inspect Utils.hex_encode other
         raise "receive failed"
     end
   end
