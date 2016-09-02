@@ -168,8 +168,8 @@ defmodule Boltex.Bolt do
   return a list of the former.
 
   The same goes for the messages: If there was a single data point in a message
-  said data point will be returned by itself. If there were multiple data points,
-  the list will be returned.
+  said data point will be returned by itself. If there were multiple data
+  points, the list will be returned.
 
   The signature is represented as one of the following:
 
