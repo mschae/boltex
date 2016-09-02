@@ -179,7 +179,7 @@ defmodule Boltex.Bolt do
   * `:failure`
   """
   def receive_data(transport, port, previous \\ []) do
-    case transport |> do_receive_data(transport) |> unpack do
+    case transport |> do_receive_data(port) |> unpack do
       {:record, _} = data ->
         receive_data transport, port, [data | previous]
 
