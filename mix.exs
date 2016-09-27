@@ -43,7 +43,7 @@ defmodule Boltex.Mixfile do
   defp package do
     [
       name: :boltex,
-      files: ~w(lib README.md LICENSE),
+      files: ~w(mix.exs lib README.md LICENSE),
       build_tools: [:hex],
       maintainers: ["Michael Schaefermeyer"],
       licenses: ["Apache 2.0"],
