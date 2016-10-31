@@ -155,6 +155,23 @@ defmodule Boltex.Bolt do
     do:  [data | transport |> receive_data(port) |> List.wrap]
   end
 
+
+  @doc """
+  Acknowdledge a server error.
+
+  This function is supposed to be called after a failure response has been
+  received from the server.
+  """
+  def ack_failure(transport, port) do
+    send_messages transport, port, [
+      {[nil], @sig_ack_failure}
+    ]
+
+    with {:ignored, []} <- receive_data(transport, port),
+         {:success, %{}} <- receive_data(transport, port),
+      do: :ok
+  end
+
   @doc """
   Receives data.
 
