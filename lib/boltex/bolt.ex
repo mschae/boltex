@@ -155,7 +155,6 @@ defmodule Boltex.Bolt do
     do:  [data | transport |> receive_data(port) |> List.wrap]
   end
 
-
   @doc """
   Acknowdledge a server error.
 
@@ -168,8 +167,8 @@ defmodule Boltex.Bolt do
     ]
 
     with {:ignored, []} <- receive_data(transport, port),
-         {:success, %{}} <- receive_data(transport, port),
-      do: :ok
+        {:success, %{}} <- receive_data(transport, port),
+    do: :ok
   end
 
   @doc """
