@@ -40,6 +40,12 @@ defimpl Boltex.PackStream.Encoder, for: Integer do
   end
 end
 
+defimpl Boltex.PackStream.Encoder, for: Float do
+  def encode(number) do
+    << 0xC1, number :: float>>
+  end
+end
+
 defimpl Boltex.PackStream.Encoder, for: BitString do
   def encode(string), do: do_encode(string, byte_size(string))
 
