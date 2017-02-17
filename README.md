@@ -37,8 +37,8 @@ Boltex.test 'localhost', 7687, "MATCH (n) RETURN n"
 - [x] Bolt message receiving
 - [x] Bolt message sending
 - [x] Auth
-- [ ] Transport adapter (e.g. plain `:gen_tcp`, `DBConnection`, ...)
-- [ ] Handle failures gracefully
+- [x] Transport adapter (e.g. plain `:gen_tcp`, `DBConnection`, ...)
+- [x] Handle failures gracefully
 - [ ] SSL
 
 ## License

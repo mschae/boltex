@@ -6,6 +6,13 @@ defmodule Boltex.PackStreamTest do
   # A lot of the examples have been taken from
   # https://github.com/neo4j/neo4j-python-driver/blob/1.1/neo4j/v1/packstream.py
   # """
+  #
+  defmodule TestStruct do
+    defstruct foo: "bar"
+  end
+
+  ##
+  # Encoding
 
   doctest Boltex.PackStream
 
@@ -62,6 +69,19 @@ defmodule Boltex.PackStreamTest do
   test "encodes map" do
     assert PackStream.encode(%{}) == <<0xA0>>
   end
+
+  test "encodes a struct" do
+    assert PackStream.encode(%TestStruct{foo: "bar"}) == PackStream.encode(%{foo: "bar"})
+  end
+
+  test "raises an error when trying to encode something we don't know" do
+    assert_raise Boltex.PackStream.EncodeError, fn ->
+      PackStream.encode({:tuple})
+    end
+  end
+
+  ##
+  # Decoding
 
   test "decodes null" do
     assert PackStream.decode(<<0xC0>>) == [nil]
@@ -120,5 +140,4 @@ defmodule Boltex.PackStreamTest do
     assert PackStream.decode(<<0xA1, 0x81, 0x61, 0x01>>) == [%{"a" => 1}]
     assert PackStream.decode(<<0xAB, 0x81, 0x61, 0x01, 0xDF>>) == [%{"a" => 1}]
   end
-
 end

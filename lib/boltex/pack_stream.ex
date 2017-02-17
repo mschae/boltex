@@ -73,7 +73,7 @@ defmodule Boltex.PackStream do
     bytes    = for(<< byte <- bin >>, do: byte)
     position = Enum.find_index bytes, &(&1 == 0xDF)
 
-    << map:: binary-size(position), 0xDF, rest :: binary >> = bin
+    << map :: binary-size(position), 0xDF, rest :: binary >> = bin
 
     (map |> decode |> to_map) ++ decode(rest)
   end
