@@ -41,6 +41,7 @@ defmodule Boltex.Mixfile do
     [
       {:credo, "~> 0.6", only: [:dev, :test]},
       {:ex_doc, "~> 0.14", only: [:dev]},
+      {:excoveralls, "~> 0.6.2", only: [:test]},
       {:inch_ex, "~> 0.5", only: [:docs]},
       {:mix_test_watch, "~> 0.3.3", only: [:dev, :test]},
     ]
