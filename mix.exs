@@ -11,6 +11,7 @@ defmodule Boltex.Mixfile do
       start_permanent: Mix.env == :prod,
       description: "An Elixir driver for Neo4J's bolt protocol.",
       package: package(),
+      test_coverage: [tool: ExCoveralls],
       preferred_cli_env: preferred_cli_env(),
       deps: deps()
     ]
