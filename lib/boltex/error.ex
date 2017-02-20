@@ -68,14 +68,14 @@ defmodule Boltex.Error do
     """
   end
 
-  defp get_id(nil), do: nil
-  defp get_id({:sslsocket, {:gen_tcp, port, _tls, _unused_yet}, _pid} = p) do
+  defp get_id({:sslsocket, {:gen_tcp, port, _tls, _unused_yet}, _pid}) do
     get_id(port)
   end
-  defp get_id(port) do
+  defp get_id(port) when is_port(port) do
     case Port.info(port, :id) do
       {:id, id} -> id
       nil       -> nil
     end
   end
+  defp get_id(_), do: nil
 end
