@@ -11,6 +11,7 @@ defmodule Boltex.Mixfile do
       start_permanent: Mix.env == :prod,
       description: "An Elixir driver for Neo4J's bolt protocol.",
       package: package(),
+      preferred_cli_env: preferred_cli_env(),
       deps: deps()
     ]
   end
@@ -58,6 +59,16 @@ defmodule Boltex.Mixfile do
         "GitHub" => "https://github.com/mschae/boltex",
         "Docs"   => "https://hexdocs.pm/boltex"
       }
+    ]
+  end
+
+  defp preferred_cli_env do
+    [
+      "coveralls": :test,
+      "coveralls.detail": :test,
+      "coveralls.post": :test,
+      "coveralls.html": :test,
+      "coveralls.travis": :test
     ]
   end
 end
