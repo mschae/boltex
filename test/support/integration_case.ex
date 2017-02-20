@@ -23,7 +23,7 @@ defmodule Boltex.IntegrationCase do
     |> URI.parse()
     |> Map.update!(:host, &String.to_charlist/1)
     |> Map.update!(:userinfo, fn
-      "" ->
+      nil ->
         {}
 
       userinfo ->
