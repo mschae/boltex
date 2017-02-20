@@ -79,10 +79,20 @@ defmodule Boltex.PackStream do
   end
 
   # Struct
-  def decode(<< 0xB :: 4, struct_size :: 4, sig :: 8>> <> struct) do
+  def decode(<< 0xB :: 4, struct_size :: 4, sig :: 8 >> <> struct) do
     {struct, rest} = struct |> decode |> Enum.split(struct_size)
 
-    [[sig: sig, fields: struct] | rest]
+    [decode_struct(sig, struct) | rest]
+  end
+  def decode(<< 0xDC, struct_size :: 8, sig :: 8 >> <> struct) do
+    {struct, rest} = struct |> decode |> Enum.split(struct_size)
+
+    [decode_struct(sig, struct) | rest]
+  end
+  def decode(<< 0xDD, struct_size :: 16, sig :: 8 >> <> struct) do
+    {struct, rest} = struct |> decode |> Enum.split(struct_size)
+
+    [decode_struct(sig, struct) | rest]
   end
 
   def decode(<<0, 0>>), do: []
@@ -116,5 +126,24 @@ defmodule Boltex.PackStream do
   defp list(list, list_size) do
     {list, rest} = list |> decode |> Enum.split(list_size)
     [list | rest]
+  end
+
+  defp decode_struct(0x4E, [id, labels, properties]) do
+    %Boltex.Struct.Node{id: id, labels: labels, properties: properties}
+  end
+  defp decode_struct(0x52, [id, start_node, end_node, type, properties]) do
+    %Boltex.Struct.Relationship{
+      id: id,
+      start_node: start_node,
+      end_node: end_node,
+      type: type,
+      properties: properties
+    }
+  end
+  defp decode_struct(signature, fields) do
+    %Boltex.Struct.Generic{
+      signature: signature,
+      fields: fields
+    }
   end
 end
