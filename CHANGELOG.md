@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.1
+
+* Fixes
+  * Another attempt to fix larger payloads - this time with a test so good
+    change it actually works (thanks @adri).
+  * More generic error handling for unknown transports (thanks @florinpatrascu).
+
 ## v0.2.0
 
 * Enhancements

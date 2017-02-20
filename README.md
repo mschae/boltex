@@ -6,7 +6,15 @@
 Elixir implementation of the Bolt protocol and corresponding PackStream
 protocol. Both is being used by Neo4J.
 
+This is a very bare-bone protocol implementation. Error handling, acknowledging
+errors, recovering sessions etc. has to be implemented upstream.
+
 *Warning: This is currently WIP and only in the wild to gather feedback!*
+
+If you want to use Boltex in production I highly recommend using connection
+pooling. You can either use the feature-rich
+[Bolt.Sips](https://github.com/florinpatrascu/bolt_sips) or check out the
+[example DBConnection implementation](https://github.com/mschae/boltex_db_connection).
 
 ## Installation
 
@@ -15,7 +23,7 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
   1. Add boltex to your list of dependencies in `mix.exs`:
 
         def deps do
-          [{:boltex, "~> 0.0.1"}]
+          [{:boltex, "~> a.b.c"}]
         end
 
   2. Ensure boltex is started before your application:
@@ -29,17 +37,6 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
 ```elixir
 Boltex.test 'localhost', 7687, "MATCH (n) RETURN n"
 ```
-
-## Todo
-
-- [x] PackStream decoding
-- [x] PackStream encoding
-- [x] Bolt message receiving
-- [x] Bolt message sending
-- [x] Auth
-- [x] Transport adapter (e.g. plain `:gen_tcp`, `DBConnection`, ...)
-- [x] Handle failures gracefully
-- [ ] SSL
 
 ## License
 
