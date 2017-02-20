@@ -113,9 +113,14 @@ defmodule Boltex.Bolt do
   """
   def send_messages(transport, port, messages) do
     messages
-    |> Enum.map(&generate_binary_message/1)
-    |> generate_chunks
+    |> encode_messages()
     |> Enum.each(&(transport.send(port, &1)))
+  end
+
+  def encode_messages(messages) do
+    messages
+    |> Enum.map(&generate_binary_message/1)
+    |> generate_chunks()
   end
 
   defp generate_binary_message({messages, signature}) do
@@ -126,31 +131,25 @@ defmodule Boltex.Bolt do
     Utils.reduce_to_binary(messages, &PackStream.encode/1)
   end
 
-  defp generate_chunks(messages, chunks \\ [], current_chunk \\ <<>>)
-  defp generate_chunks([], chunks, current_chunk) do
-    [current_chunk | chunks]
-    |> Enum.reverse
+  defp generate_chunks(messages, chunks \\ [])
+  defp generate_chunks([], chunks) do
+    Enum.reverse chunks
   end
-  defp generate_chunks([message | messages], chunks, current_chunk)
-  when byte_size(current_chunk <> message) <= @max_chunk_size do
+  defp generate_chunks([message | messages], chunks)
+  when byte_size(message) <= @max_chunk_size do
     message_size  = byte_size message
-    current_chunk =
-      current_chunk <>
+    chunk =
       << message_size :: 16 >> <>
       message <>
       @zero_chunk
 
-    generate_chunks messages, chunks, current_chunk
+    generate_chunks messages, [chunk | chunks]
   end
-  defp generate_chunks([message | messages], chunks, current_chunk) do
-    oversized_chunk = current_chunk <> message
-    {first, rest}   = binary_part oversized_chunk, 0, @max_chunk_size
-    first_size      = byte_size first
-    rest_size       = byte_size rest
-    current_chunk   = current_chunk <> << first_size :: 16 >> <> first
-    new_chunk       = << rest_size :: 16 >> <> rest
+  defp generate_chunks([message | messages], chunks) do
+    <<split :: binary-size(@max_chunk_size)>> <> rest = message
+    chunk = << @max_chunk_size :: 16 >> <> split
 
-    generate_chunks messages, [current_chunk | chunks], new_chunk
+    generate_chunks [rest | messages], [chunk | chunks]
   end
 
   @doc """
@@ -181,7 +180,7 @@ defmodule Boltex.Bolt do
 
     case receive_data(transport, port, options) do
       {:success, %{}} = data ->
-        [data | (transport |> receive_data(port) |> List.wrap)]
+        [data | (transport |> receive_data(port, options) |> List.wrap)]
 
       {:failure, map} ->
         Boltex.Error.exception map, port, :run_statement
