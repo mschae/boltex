@@ -4,7 +4,7 @@ defmodule BoltexTest do
 
   doctest Boltex
 
-  test "encodes normal params correctly", %{port: port} do
+  test "works for small queries", %{port: port} do
     query = """
       UNWIND {largeRange} as i
       RETURN i
@@ -22,7 +22,7 @@ defmodule BoltexTest do
     assert numbers == Enum.to_list(0..100)
   end
 
-  test "encodes big params correctly", %{port: port} do
+  test "works for big queries", %{port: port} do
     query = """
       UNWIND {largeRange} as i
       RETURN i
