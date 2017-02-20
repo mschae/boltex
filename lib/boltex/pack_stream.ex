@@ -79,7 +79,17 @@ defmodule Boltex.PackStream do
   end
 
   # Struct
-  def decode(<< 0xB :: 4, struct_size :: 4, sig :: 8>> <> struct) do
+  def decode(<< 0xB :: 4, struct_size :: 4, sig :: 8 >> <> struct) do
+    {struct, rest} = struct |> decode |> Enum.split(struct_size)
+
+    [[sig: sig, fields: struct] | rest]
+  end
+  def decode(<< 0xDC, struct_size :: 8, sig :: 8 >> <> struct) do
+    {struct, rest} = struct |> decode |> Enum.split(struct_size)
+
+    [[sig: sig, fields: struct] | rest]
+  end
+  def decode(<< 0xDD, struct_size :: 16, sig :: 8 >> <> struct) do
     {struct, rest} = struct |> decode |> Enum.split(struct_size)
 
     [[sig: sig, fields: struct] | rest]

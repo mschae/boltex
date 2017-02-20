@@ -173,41 +173,67 @@ defmodule Boltex.Bolt do
       ]
   """
   def run_statement(transport, port, statement, params \\ %{}, options \\ []) do
-    send_messages transport, port, [
-      {[statement, params], @sig_run},
-      {[nil], @sig_pull_all}
-    ]
+    message = [statement, params]
 
-    case receive_data(transport, port, options) do
-      {:success, %{}} = data ->
-        [data | (transport |> receive_data(port, options) |> List.wrap)]
-
+    with :ok                  <- send_messages(transport, port, [{message, @sig_run}]),
+         {:success, _} = data <- receive_data(transport, port, options),
+         :ok                  <- send_messages(transport, port, [{[], @sig_pull_all}]),
+         more_data            <- receive_data(transport, port, options),
+         {:success, _}        <- List.last(more_data)
+    do
+      [data | more_data]
+    else
       {:failure, map} ->
         Boltex.Error.exception map, port, :run_statement
 
-      error ->
+      error = %Boltex.Error{} ->
         error
+
+      error ->
+        Boltex.Error.exception error, port, :run_statement
     end
   end
 
   @doc """
-  Acknowdledge a server error.
+  Implementation of Bolt's ACK_FAILURE. It acknowledges a failure while keeping
+  transactions alive.
 
-  This function is supposed to be called after a failure response has been
-  received from the server.
+  See http://boltprotocol.org/v1/#message-ack-failure
 
   ## Options
 
   See "Shared options" in the documentation of this module.
   """
-  def ack_failure(transport, port, options) do
+  def ack_failure(transport, port, options \\ []) do
     send_messages transport, port, [
       {[nil], @sig_ack_failure}
     ]
 
-    with {:ignored, []}  <- receive_data(transport, port, options),
-         {:success, %{}} <- receive_data(transport, port, options),
-    do: :ok
+    case receive_data(transport, port, options) do
+      {:success, %{}} -> :ok
+      error           -> Boltex.Error.exception(error, port, :ack_failure)
+    end
+  end
+
+  @doc """
+  Implementation of Bolt's RESET message. It resets a session to a "clean"
+  state.
+
+  See http://boltprotocol.org/v1/#message-reset
+
+  ## Options
+
+  See "Shared options" in the documentation of this module.
+  """
+  def reset(transport, port, options \\ []) do
+    send_messages transport, port, [
+      {[nil], @sig_reset}
+    ]
+
+    case receive_data(transport, port, options) do
+      {:success, %{}} -> :ok
+      error           -> Boltex.Error.exception(error, port, :reset)
+    end
   end
 
   @doc """
@@ -255,7 +281,7 @@ defmodule Boltex.Bolt do
       end
     else
       other ->
-        {:error, "Error receiving data: #{inspect other}"}
+        Error.exception(other, port, :receive_data)
     end
   end
 

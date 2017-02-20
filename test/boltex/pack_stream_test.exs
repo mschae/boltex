@@ -75,6 +75,15 @@ defmodule Boltex.PackStreamTest do
 
   test "encodes map" do
     assert PackStream.encode(%{}) == <<0xA0>>
+
+    map_8 = 1..16 |> Enum.map(&{&1, "a"}) |> Map.new
+    assert <<0xD8, 16 :: 8 >> <> _rest = PackStream.encode(map_8)
+
+    map_16 = 1..256 |> Enum.map(&{&1, "a"}) |> Map.new
+    assert <<0xD9, 256 :: 16 >> <> _rest = PackStream.encode(map_16)
+
+    map_32 = 1..66_000 |> Enum.map(&{&1, "a"}) |> Map.new
+    assert <<0xDA, 256 :: 32 >> <> _rest = PackStream.encode(map_16)
   end
 
   test "encodes a struct" do
@@ -82,7 +91,7 @@ defmodule Boltex.PackStreamTest do
   end
 
   test "raises an error when trying to encode something we don't know" do
-    assert_raise Boltex.PackStream.EncodeError, fn ->
+    assert_raise Boltex.PackStream.EncodeError, "unable to encode value: {:tuple}", fn ->
       PackStream.encode({:tuple})
     end
   end
@@ -157,9 +166,5 @@ defmodule Boltex.PackStreamTest do
     assert PackStream.decode(<<0xAB, 0x81, 0x61, 0x01>>) == [%{"a" => 1}]
     assert PackStream.decode(<<0xDB, 0x81, 0x61, 0x01, 0xDF>>) == [%{"a" => 1}]
     assert PackStream.decode(big_map) == [%{"a" => 1,"b" => 1,"c" => 3,"d" => 4,"e" => 5,"f" => 6,"g" => 7,"h" => 8,"i" => 9,"j" => 0,"k" => 1,"l" => 2,"m" => 3,"n" => 4,"o" => 5,"p" => 6}]
-
-  end
-
-  test "decodes big maps" do
   end
 end
