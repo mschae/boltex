@@ -83,7 +83,7 @@ defmodule Boltex.PackStreamTest do
     assert <<0xD9, 256 :: 16 >> <> _rest = PackStream.encode(map_16)
 
     map_32 = 1..66_000 |> Enum.map(&{&1, "a"}) |> Map.new
-    assert <<0xDA, 256 :: 32 >> <> _rest = PackStream.encode(map_16)
+    assert <<0xDA, 66_000 :: 32 >> <> _rest = PackStream.encode(map_32)
   end
 
   test "encodes a struct" do
