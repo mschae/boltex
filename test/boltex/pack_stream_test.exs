@@ -1,5 +1,5 @@
 defmodule Boltex.PackStreamTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Boltex.{Utils, PackStream}
 
@@ -69,8 +69,15 @@ defmodule Boltex.PackStreamTest do
 
   test "encodes list" do
     assert PackStream.encode([]) == <<0x90>>
-    long_list = Stream.repeatedly(fn -> "a" end) |> Enum.take(66_000)
-    assert << 0xD6, 66_000 :: 32, _ :: binary-size(132_000) >> = PackStream.encode(long_list)
+
+    list_8 = Stream.repeatedly(fn -> "a" end) |> Enum.take(16)
+    assert << 0xD4, 16 :: 8, _ :: binary-size(32) >> = PackStream.encode(list_8)
+
+    list_16 = Stream.repeatedly(fn -> "a" end) |> Enum.take(256)
+    assert << 0xD5, 256 :: 16, _ :: binary-size(512) >> = PackStream.encode(list_16)
+
+    list_32 = Stream.repeatedly(fn -> "a" end) |> Enum.take(66_000)
+    assert << 0xD6, 66_000 :: 32, _ :: binary-size(132_000) >> = PackStream.encode(list_32)
   end
 
   test "encodes map" do
@@ -141,30 +148,68 @@ defmodule Boltex.PackStreamTest do
   end
 
   test "decodes lists" do
-    longlist =
-      ~w(D4 14 01 02 03 04 05 06  07 08 09 00)
-      |> Utils.hex_decode
 
     assert PackStream.decode(<<0x90>>)                   == [[]]
     assert PackStream.decode(<<0x93, 0x01, 0x02, 0x03>>) == [[1, 2, 3]]
-    assert PackStream.decode(longlist)                   == [[1, 2, 3, 4, 5, 6, 7, 8, 9, 0]]
-    assert PackStream.decode(<<0xD7, 0x01, 0x02, 0xDF>>) == [[1, 2]]
+
+    list_8 =
+      << 0xD4, 16 :: 8 >> <>
+      (1..16 |> Enum.map(&PackStream.encode/1) |> Enum.join())
+    assert PackStream.decode(list_8) == [1..16 |> Enum.to_list]
+
+    list_16 =
+      << 0xD5, 256 :: 16 >> <>
+      (1..256 |> Enum.map(&PackStream.encode/1) |> Enum.join())
+    assert PackStream.decode(list_16) == [1..256 |> Enum.to_list]
+
+    list_32 =
+      << 0xD6, 66_000 :: 32 >> <>
+      (1..66_000 |> Enum.map(&PackStream.encode/1) |> Enum.join())
+    assert PackStream.decode(list_32) == [1..66_000 |> Enum.to_list]
   end
 
   test "decodes maps" do
-    big_map =
-      ~w(
-      D8 10 81 61  01 81 62 01  81 63 03 81  64 04 81 65
-      05 81 66 06  81 67 07 81  68 08 81 69  09 81 6A 00
-      81 6B 01 81  6C 02 81 6D  03 81 6E 04  81 6F 05 81
-      70 06
-      )
-      |> Utils.hex_decode
-
     assert PackStream.decode(<<0xA0>>) == [%{}]
     assert PackStream.decode(<<0xA1, 0x81, 0x61, 0x01>>) == [%{"a" => 1}]
     assert PackStream.decode(<<0xAB, 0x81, 0x61, 0x01>>) == [%{"a" => 1}]
-    assert PackStream.decode(<<0xDB, 0x81, 0x61, 0x01, 0xDF>>) == [%{"a" => 1}]
-    assert PackStream.decode(big_map) == [%{"a" => 1,"b" => 1,"c" => 3,"d" => 4,"e" => 5,"f" => 6,"g" => 7,"h" => 8,"i" => 9,"j" => 0,"k" => 1,"l" => 2,"m" => 3,"n" => 4,"o" => 5,"p" => 6}]
+
+    map_8 =
+      << 0xD8, 16 :: 8 >> <> (
+        1..16
+        |> Enum.map(fn(i) -> PackStream.encode("#{i}") <> <<1>> end)
+        |> Enum.join()
+      )
+    assert PackStream.decode(map_8) |> List.first |> map_size == 16
+
+    map_16 =
+      << 0xD9, 256 :: 16 >> <> (
+        1..256
+        |> Enum.map(fn(i) -> PackStream.encode("#{i}") <> <<1>> end)
+        |> Enum.join()
+      )
+    assert PackStream.decode(map_16) |> List.first |> map_size == 256
+
+    map_32 =
+      << 0xDA, 66_000 :: 32 >> <> (
+        1..66_000
+        |> Enum.map(fn(i) -> PackStream.encode("#{i}") <> <<1>> end)
+        |> Enum.join()
+      )
+    assert PackStream.decode(map_32) |> List.first |> map_size == 66_000
+  end
+
+  test "decodes structs" do
+    assert PackStream.decode(<< 0xB0, 0x01 >>) == [[sig: 1, fields: []]]
+    assert PackStream.decode(<< 0xB1, 0x01, 0x01 >>) == [[sig: 1, fields: [1]]]
+
+    struct_8 =
+      << 0xDC, 16 :: 8, 0x02 >> <>
+      (1..16 |> Enum.map(&PackStream.encode/1) |> Enum.join())
+    assert PackStream.decode(struct_8) == [[sig: 2, fields: Enum.to_list(1..16)]]
+
+    struct_16 =
+      << 0xDD, 256 :: 16, 0x03 >> <>
+      (1..256 |> Enum.map(&PackStream.encode/1) |> Enum.join())
+    assert PackStream.decode(struct_16) == [[sig: 3, fields: Enum.to_list(1..256)]]
   end
 end
