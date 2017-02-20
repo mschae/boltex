@@ -75,7 +75,7 @@ defmodule Boltex.PackStream do
 
     << map :: binary-size(position), 0xDF, rest :: binary >> = bin
 
-    (map |> decode |> to_map) ++ decode(rest)
+    [(map |> decode |> to_map)] ++ decode(rest)
   end
 
   # Struct

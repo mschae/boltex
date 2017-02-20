@@ -34,6 +34,8 @@ defmodule Boltex.PackStreamTest do
     assert PackStream.encode(42)  == << 0x2A >>
     assert PackStream.encode(-42) == << 0xC8, 0xD6 >>
     assert PackStream.encode(420) == << 0xC9, 0x01, 0xA4 >>
+    assert PackStream.encode(33_000) == << 0xCA, 0x00, 0x00, 0x80, 0xE8 >>
+    assert PackStream.encode(2_150_000_000) == << 0xCB, 0x00, 0x00, 0x00, 0x00, 0x80, 0x26, 0x65, 0x80 >>
   end
 
   test "encodes float" do
@@ -60,10 +62,15 @@ defmodule Boltex.PackStreamTest do
       size and the UTF-8 encoded data.
       """
     assert <<0xD1, 0x01, 0xA5, _ :: binary-size(421)>> = PackStream.encode(long_16)
+
+    long_32 = String.duplicate("a", 66_000)
+    assert <<0xD2, 66_000 :: 32, _ :: binary-size(66_000)>> = PackStream.encode(long_32)
   end
 
   test "encodes list" do
     assert PackStream.encode([]) == <<0x90>>
+    long_list = Stream.repeatedly(fn -> "a" end) |> Enum.take(66_000)
+    assert << 0xD6, 66_000 :: 32, _ :: binary-size(132_000) >> = PackStream.encode(long_list)
   end
 
   test "encodes map" do
@@ -136,8 +143,23 @@ defmodule Boltex.PackStreamTest do
   end
 
   test "decodes maps" do
+    big_map =
+      ~w(
+      D8 10 81 61  01 81 62 01  81 63 03 81  64 04 81 65
+      05 81 66 06  81 67 07 81  68 08 81 69  09 81 6A 00
+      81 6B 01 81  6C 02 81 6D  03 81 6E 04  81 6F 05 81
+      70 06
+      )
+      |> Utils.hex_decode
+
     assert PackStream.decode(<<0xA0>>) == [%{}]
     assert PackStream.decode(<<0xA1, 0x81, 0x61, 0x01>>) == [%{"a" => 1}]
-    assert PackStream.decode(<<0xAB, 0x81, 0x61, 0x01, 0xDF>>) == [%{"a" => 1}]
+    assert PackStream.decode(<<0xAB, 0x81, 0x61, 0x01>>) == [%{"a" => 1}]
+    assert PackStream.decode(<<0xDB, 0x81, 0x61, 0x01, 0xDF>>) == [%{"a" => 1}]
+    assert PackStream.decode(big_map) == [%{"a" => 1,"b" => 1,"c" => 3,"d" => 4,"e" => 5,"f" => 6,"g" => 7,"h" => 8,"i" => 9,"j" => 0,"k" => 1,"l" => 2,"m" => 3,"n" => 4,"o" => 5,"p" => 6}]
+
+  end
+
+  test "decodes big maps" do
   end
 end

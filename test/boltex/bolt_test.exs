@@ -39,4 +39,22 @@ defmodule BoltexTest do
 
     assert numbers == Enum.to_list(0..25_000)
   end
+
+  test "returns errors for wrong cypher queris", %{port: port} do
+    assert %Boltex.Error{type: :cypher_error} = Bolt.run_statement :gen_tcp, port, "What?"
+  end
+
+  test "allows to recover from error", %{port: port} do
+    assert %Boltex.Error{type: :cypher_error} = Bolt.run_statement :gen_tcp, port, "What?"
+    assert :ok                                = Bolt.ack_failure :gen_tcp, port, []
+    assert [{:success, _} | _]                = Bolt.run_statement :gen_tcp, port, "RETURN 1 as num"
+  end
+
+  test "returns proper error when using a bad session", %{port: port} do
+    assert %Boltex.Error{type: :cypher_error} = Bolt.run_statement :gen_tcp, port, "What?"
+    error = Bolt.run_statement :gen_tcp, port, "RETURN 1 as num"
+
+    assert %Boltex.Error{} = error
+    assert error.message   =~ ~r/'ACK_FAILURE'/
+  end
 end
