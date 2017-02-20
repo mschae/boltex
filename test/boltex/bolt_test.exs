@@ -8,7 +8,6 @@ defmodule BoltexTest do
     :ok         = Bolt.handshake :gen_tcp, port
     :ok         = Bolt.init :gen_tcp, port, {"neo4j", "password"}
 
-
     query = """
       UNWIND {largeRange} as i
       RETURN i
