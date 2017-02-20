@@ -12,7 +12,6 @@ defmodule Boltex.Mixfile do
       description: "An Elixir driver for Neo4J's bolt protocol.",
       package: package(),
       deps: deps()
-
     ]
   end
 
