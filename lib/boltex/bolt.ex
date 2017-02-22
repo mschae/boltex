@@ -173,24 +173,20 @@ defmodule Boltex.Bolt do
       ]
   """
   def run_statement(transport, port, statement, params \\ %{}, options \\ []) do
-    message = [statement, params]
+    send_messages transport, port, [
+      {[statement, params], @sig_run},
+      {[], @sig_pull_all}
+    ]
 
-    with :ok                  <- send_messages(transport, port, [{message, @sig_run}]),
-         {:success, _} = data <- receive_data(transport, port, options),
-         :ok                  <- send_messages(transport, port, [{[], @sig_pull_all}]),
-         more_data            <- receive_data(transport, port, options),
-         {:success, _}        <- List.last(more_data)
-    do
-      [data | more_data]
-    else
+    case receive_data(transport, port, options) do
+      {:success, %{}} = data ->
+        [data | (transport |> receive_data(port, options) |> List.wrap)]
+
       {:failure, map} ->
         Boltex.Error.exception map, port, :run_statement
 
-      error = %Boltex.Error{} ->
-        error
-
       error ->
-        Boltex.Error.exception error, port, :run_statement
+        error
     end
   end
 
@@ -209,10 +205,9 @@ defmodule Boltex.Bolt do
       {[nil], @sig_ack_failure}
     ]
 
-    case receive_data(transport, port, options) do
-      {:success, %{}} -> :ok
-      error           -> Boltex.Error.exception(error, port, :ack_failure)
-    end
+    with {:ignored, []}  <- receive_data(transport, port, options),
+         {:success, %{}} <- receive_data(transport, port, options),
+    do: :ok
   end
 
   @doc """
@@ -227,13 +222,12 @@ defmodule Boltex.Bolt do
   """
   def reset(transport, port, options \\ []) do
     send_messages transport, port, [
-      {[nil], @sig_reset}
+      {[], @sig_reset}
     ]
 
-    case receive_data(transport, port, options) do
-      {:success, %{}} -> :ok
-      error           -> Boltex.Error.exception(error, port, :reset)
-    end
+    with {:ignored, []}  <- receive_data(transport, port, options),
+         {:success, %{}} <- receive_data(transport, port, options),
+    do: :ok
   end
 
   @doc """

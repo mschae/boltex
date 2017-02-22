@@ -44,16 +44,8 @@ defmodule Boltex.BoltTest do
     assert [{:success, _} | _]                = Bolt.run_statement :gen_tcp, port, "RETURN 1 as num"
   end
 
-  test "returns proper error when using a bad session", %{port: port} do
-    assert %Boltex.Error{type: :cypher_error} = Bolt.run_statement :gen_tcp, port, "What?"
-    error = Bolt.run_statement :gen_tcp, port, "RETURN 1 as num"
-
-    assert %Boltex.Error{} = error
-    assert error.message   =~ ~r/The session is in a failed state/
-  end
-
   test "returns proper error when misusing ack_failure and reset", %{port: port} do
-    assert %Boltex.Error{} = Bolt.ack_failure :gen_tcp, port
+    assert {:failure, _} = Bolt.ack_failure :gen_tcp, port
     :gen_tcp.close port
     assert %Boltex.Error{} = Bolt.reset :gen_tcp, port
   end
