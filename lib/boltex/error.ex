@@ -62,6 +62,12 @@ defmodule Boltex.Error do
       other                 -> other
     end
   end
+  defp message_for(_function, {:ignored, []}) do
+    """
+    The session is in a failed state and ignores further messages. You need to
+    `ACK_FAILURE` or `RESET` in order to send new messages.
+    """
+  end
   defp message_for(function, message) do
     """
     #{function}: Unknown failure: #{inspect message}

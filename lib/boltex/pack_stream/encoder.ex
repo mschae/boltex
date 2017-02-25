@@ -85,9 +85,6 @@ defimpl Boltex.PackStream.Encoder, for: List do
   defp do_encode(binary, list_size) when list_size <= 4_294_967_295 do
     << 0xD6, list_size :: 32 >> <> binary
   end
-  defp do_encode(binary, _size) do
-    << 0xD7 >> <> binary <> <<0xDF>>
-  end
 end
 
 defimpl Boltex.PackStream.Encoder, for: Map do

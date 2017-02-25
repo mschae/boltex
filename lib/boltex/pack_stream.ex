@@ -55,31 +55,25 @@ defmodule Boltex.PackStream do
   def decode(<< 0xD4,     list_size :: 8  >> <> bin), do: list(bin, list_size)
   def decode(<< 0xD5,     list_size :: 16 >> <> bin), do: list(bin, list_size)
   def decode(<< 0xD6,     list_size :: 32 >> <> bin), do: list(bin, list_size)
-  def decode(<< 0xD7 >> <> bin) do
-    bytes    = for(<< byte <- bin >>, do: byte)
-    position = Enum.find_index bytes, &(&1 == 0xDF)
-
-    << list :: binary-size(position), 0xDF, rest :: binary >> = bin
-
-    [decode(list) | decode(rest)]
-  end
 
   # Maps
   def decode(<< 0xA :: 4, entries :: 4 >>  <> bin), do: map(bin, entries)
   def decode(<< 0xD8,     entries :: 8 >>  <> bin), do: map(bin, entries)
   def decode(<< 0xD9,     entries :: 16 >> <> bin), do: map(bin, entries)
   def decode(<< 0xDA,     entries :: 32 >> <> bin), do: map(bin, entries)
-  def decode(<< 0xDB >> <> bin) do
-    bytes    = for(<< byte <- bin >>, do: byte)
-    position = Enum.find_index bytes, &(&1 == 0xDF)
-
-    << map :: binary-size(position), 0xDF, rest :: binary >> = bin
-
-    [(map |> decode |> to_map)] ++ decode(rest)
-  end
 
   # Struct
-  def decode(<< 0xB :: 4, struct_size :: 4, sig :: 8>> <> struct) do
+  def decode(<< 0xB :: 4, struct_size :: 4, sig :: 8 >> <> struct) do
+    {struct, rest} = struct |> decode |> Enum.split(struct_size)
+
+    [[sig: sig, fields: struct] | rest]
+  end
+  def decode(<< 0xDC, struct_size :: 8, sig :: 8 >> <> struct) do
+    {struct, rest} = struct |> decode |> Enum.split(struct_size)
+
+    [[sig: sig, fields: struct] | rest]
+  end
+  def decode(<< 0xDD, struct_size :: 16, sig :: 8 >> <> struct) do
     {struct, rest} = struct |> decode |> Enum.split(struct_size)
 
     [[sig: sig, fields: struct] | rest]
