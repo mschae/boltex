@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.3.0
+
+* Fixes
+  * Added decoding for large structures
+* Improvements
+  * Better `run_statement` (see below)
+  * Added `Boltex.Bolt.reset/2,3` to
+    [reset a connection](http://boltprotocol.org/v1/#message-reset).
+  * Significantly better testing and code coverage.
+
+### Backwards incompatible changes
+* We improved `Boltex.Bolt.run_statement/3,5`: Instead of always running
+  `SIG PULL` we are now waiting for the run statement to return ok. This
+  causes the server to no longer emit `IGNORED` messages when a failure
+  happened. `Boltex.Bolt.ack_failure/2,3` was adjusted accordingly
+
 ## v0.2.1
 
 * Fixes
@@ -19,7 +35,7 @@
 ## v0.0.2
 
 * Enhancements
-  * Adds `Boltex.Bolt.ack_failur/2` to acknowledge failures as intended by the
+  * Adds `Boltex.Bolt.ack_failure/2` to acknowledge failures as intended by the
     bolt protocol (thanks @vic).
 * Fixes
   * Encodes floats (how have I missed that?!).
