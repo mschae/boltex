@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.4.0
+
+- not backward compatible. The init function now returns additional info received from the server
+- dependencies updates
+
 ## v0.3.0
 
 * Fixes

@@ -5,3 +5,4 @@
 /docs
 erl_crash.dump
 *.ez
+.vscode/

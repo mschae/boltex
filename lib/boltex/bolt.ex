@@ -15,7 +15,7 @@ defmodule Boltex.Bolt do
   @sig_ack_failure 0x0E
   @sig_reset       0x0F
   @sig_run         0x10
-  @sig_discard_all 0x2F
+  # @sig_discard_all 0x2F
   @sig_pull_all    0x3F
   @sig_success     0x70
   @sig_record      0x71
@@ -76,18 +76,18 @@ defmodule Boltex.Bolt do
   ## Examples
 
       iex> Boltex.Bolt.init :gen_tcp, port
-      :ok
+      {:ok, info}
 
       iex> Boltex.Bolt.init :gen_tcp, port, {"username", "password"}
-      :ok
+      {:ok, info}
   """
   def init(transport, port, auth \\ {}, options \\ []) do
     params = auth_params auth
     send_messages transport, port, [{[@user_agent, params], @sig_init}]
 
     case receive_data(transport, port, options) do
-      {:success, %{}} ->
-        :ok
+      {:success, info} ->
+        {:ok, info}
 
       {:failure, response} ->
         {:error, Error.exception(response, port, :init)}

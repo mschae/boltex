@@ -4,7 +4,7 @@ defmodule Boltex.Mixfile do
   def project do
     [
       app: :boltex,
-      version: "0.3.0",
+      version: "0.4.0",
       elixir: "~> 1.3",
       elixirc_paths: elixirc_paths(Mix.env),
       build_embedded: Mix.env == :prod,
@@ -41,11 +41,11 @@ defmodule Boltex.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:credo, "~> 0.6", only: [:dev, :test]},
+      {:credo, "~> 0.8", only: [:dev, :test]},
       {:ex_doc, "~> 0.14", only: [:dev]},
-      {:excoveralls, "~> 0.6.2", only: [:test]},
-      {:inch_ex, "~> 0.5", only: [:docs]},
-      {:mix_test_watch, "~> 0.3.3", only: [:dev, :test]},
+      {:excoveralls, "~> 0.7.5", only: [:test]},
+      {:inch_ex, "~> 0.5.6", only: [:docs]},
+      {:mix_test_watch, "~> 0.5.0", only: [:dev, :test]},
     ]
   end
 
