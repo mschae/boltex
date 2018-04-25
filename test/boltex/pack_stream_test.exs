@@ -131,6 +131,10 @@ defmodule Boltex.PackStreamTest do
     assert PackStream.decode(<<0xCB, 0, 0, 0, 0, 0, 0, 0, 0x2A>>) == [42]
   end
 
+  test "decodes negatiev integers" do
+    assert PackStream.decode(<<0xC8, 0xD6>>) == [-42]
+  end
+
   test "decodes strings" do
     longstr =
       ~w(D0 1A 61 62  63 64 65 66  67 68 69 6A  6B 6C 6D 6E 6F 70 71 72  73 74 75 76  77 78 79 7A)

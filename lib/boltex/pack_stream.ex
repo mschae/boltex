@@ -83,11 +83,13 @@ defmodule Boltex.PackStream do
   def decode(""), do: []
 
   # Integers
-  def decode(<< 0xC8, int, rest :: binary >>),       do: [int | decode(rest)]
-  def decode(<< 0xC9, int :: 16, rest :: binary >>), do: [int | decode(rest)]
-  def decode(<< 0xCA, int :: 32, rest :: binary >>), do: [int | decode(rest)]
-  def decode(<< 0xCB, int :: 64, rest :: binary >>), do: [int | decode(rest)]
-  def decode(<< int, rest :: binary >>),             do: [int | decode(rest)]
+  def decode(<< 0xC8, int :: signed-integer, rest :: binary >>),    do: [int | decode(rest)]
+  def decode(<< 0xC9, int :: signed-integer-16, rest :: binary >>), do: [int | decode(rest)]
+  def decode(<< 0xCA, int :: signed-integer-32, rest :: binary >>), do: [int | decode(rest)]
+  def decode(<< 0xCB, int :: signed-integer-64, rest :: binary >>), do: [int | decode(rest)]
+  def decode(<< int :: signed-integer, rest :: binary >>) do
+    [int | decode(rest)]
+  end
 
   defp decode_text(bytes, str_length) do
     << string :: binary-size(str_length), rest :: binary >> = bytes
