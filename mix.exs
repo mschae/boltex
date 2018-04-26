@@ -6,9 +6,9 @@ defmodule Boltex.Mixfile do
       app: :boltex,
       version: "0.4.0",
       elixir: "~> 1.3",
-      elixirc_paths: elixirc_paths(Mix.env),
-      build_embedded: Mix.env == :prod,
-      start_permanent: Mix.env == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
       description: "An Elixir driver for Neo4J's bolt protocol.",
       package: package(),
       test_coverage: [tool: ExCoveralls],
@@ -22,13 +22,13 @@ defmodule Boltex.Mixfile do
   # Type "mix help compile.app" for more information
   def application do
     [
-      #mod: {Boltex, []},
+      # mod: {Boltex, []},
       applications: [:logger]
-   ]
+    ]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
-  defp elixirc_paths(_),     do: ["lib"]
+  defp elixirc_paths(_), do: ["lib"]
 
   # Dependencies can be Hex packages:
   #
@@ -45,7 +45,7 @@ defmodule Boltex.Mixfile do
       {:ex_doc, "~> 0.14", only: [:dev]},
       {:excoveralls, "~> 0.7.5", only: [:test]},
       {:inch_ex, "~> 0.5.6", only: [:docs]},
-      {:mix_test_watch, "~> 0.5.0", only: [:dev, :test]},
+      {:mix_test_watch, "~> 0.5.0", only: [:dev, :test]}
     ]
   end
 
@@ -58,14 +58,14 @@ defmodule Boltex.Mixfile do
       licenses: ["Apache 2.0"],
       links: %{
         "GitHub" => "https://github.com/mschae/boltex",
-        "Docs"   => "https://hexdocs.pm/boltex"
+        "Docs" => "https://hexdocs.pm/boltex"
       }
     ]
   end
 
   defp preferred_cli_env do
     [
-      "coveralls": :test,
+      coveralls: :test,
       "coveralls.detail": :test,
       "coveralls.post": :test,
       "coveralls.html": :test,
