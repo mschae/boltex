@@ -1,9 +1,17 @@
 # Changelog
 
+## v0.4.1
+
+* Fixes
+    * Negative integers are now being decoded correctly.
+    * Dependency upgrades
+* Improvement
+    * Used the code formatter
+
 ## v0.4.0
 
-- not backward compatible. The init function now returns additional info received from the server
-- dependencies updates
+* not backward compatible. The init function now returns additional info received from the server
+* dependencies updates
 
 ## v0.3.0
 
