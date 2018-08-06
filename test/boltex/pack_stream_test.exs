@@ -165,6 +165,9 @@ defmodule Boltex.PackStreamTest do
 
     list_32 = <<0xD6, 66_000::32>> <> (1..66_000 |> Enum.map(&PackStream.encode/1) |> Enum.join())
     assert PackStream.decode(list_32) == [1..66_000 |> Enum.to_list()]
+
+    ending_0_list = <<0x93, 0x91, 0x1, 0x92, 0x2, 0x0, 0x0>>
+    assert PackStream.decode(ending_0_list) == [[[1], [2, 0], 0]]
   end
 
   test "decodes maps" do

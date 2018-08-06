@@ -84,7 +84,6 @@ defmodule Boltex.PackStream do
     [[sig: sig, fields: struct] | rest]
   end
 
-  def decode(<<0, 0>>), do: []
   def decode(""), do: []
 
   # Integers
