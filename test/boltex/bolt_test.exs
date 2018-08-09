@@ -82,7 +82,7 @@ defmodule Boltex.BoltTest do
   test "an invalid parameter value yields an error", %{port: port} do
     cypher = "MATCH (n:Person {invalid: {an_elixir_datetime}}) RETURN TRUE"
 
-    assert_raise Boltex.PackStream.EncodeError, ~r/^unable to encode value: {\d+, \d+}/i, fn ->
+    assert_raise Boltex.PackStream.EncodeError, ~r/^unable to encode value: /i, fn ->
       Bolt.run_statement(:gen_tcp, port, cypher, %{an_elixir_datetime: DateTime.utc_now()})
     end
   end
