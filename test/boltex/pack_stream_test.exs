@@ -97,7 +97,28 @@ defmodule Boltex.PackStreamTest do
   end
 
   test "encodes a struct" do
-    assert PackStream.encode(%TestStruct{foo: "bar"}) == PackStream.encode(%{foo: "bar"})
+    # Unordered struct
+    assert <<0xB2, 0x1, 0xA1, 0x83, 0x66, 0x6F, 0x6F, 0x83, 0x62, 0x61, 0x72>> =
+             PackStream.encode({0x01, %TestStruct{foo: "bar"}})
+
+    # Ordered struct
+    assert <<0xB2, 0x1, 0x85, 0x66, 0x69, 0x72, 0x73, 0x74, 0x86, 0x73, 0x65, 0x63, 0x6F, 0x6E,
+             0x64>> = PackStream.encode({0x01, ["first", "second"]})
+
+    assert <<0xDC, 0x6F, _::binary>> = PackStream.encode({0x01, Enum.into(1..111, [])})
+    assert <<0xDD, 0x1, 0x4D, _::binary>> = PackStream.encode({0x01, Enum.into(1..333, [])})
+
+    assert_raise Boltex.PackStream.EncodeError, ~r/^unable to encode value: /i, fn ->
+      PackStream.encode({128, []})
+    end
+
+    assert_raise Boltex.PackStream.EncodeError, ~r/^unable to encode value: /i, fn ->
+      PackStream.encode({-1, []})
+    end
+
+    assert_raise Boltex.PackStream.EncodeError, ~r/^unable to encode value: /i, fn ->
+      PackStream.encode({"a", []})
+    end
   end
 
   test "raises an error when trying to encode something we don't know" do

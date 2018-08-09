@@ -155,13 +155,61 @@ defimpl Boltex.PackStream.Encoder, for: Map do
 end
 
 defimpl Boltex.PackStream.Encoder, for: Any do
-  def encode(%{__struct__: _} = item) do
-    item
-    |> Map.from_struct()
-    |> Boltex.PackStream.Encoder.encode()
+  @tiny_struct_marker 0xB
+  @struct8_marker 0xDC
+  @struct16_marker 0xDD
+
+  @valid_signatures 0..127
+
+  def encode({signature, %{__struct__: _} = data}) when signature in @valid_signatures do
+    do_encode(data, signature)
+  end
+
+  def encode({signature, data}) when signature in @valid_signatures and is_list(data) do
+    do_encode(data, signature)
   end
 
   def encode(item) do
     raise Boltex.PackStream.EncodeError, item: item
+  end
+
+  # Unordered structs
+  # For this kind of structs, a Map is provided
+  defp do_encode(map, signature) when is_map(map) and map_size(map) < 16 do
+    <<@tiny_struct_marker::4, map_size(map)::4, signature>> <> encode_struct_map(map)
+  end
+
+  defp do_encode(map, signature) when is_map(map) and map_size(map) < 256 do
+    <<@struct8_marker::8, map_size(map)::8, signature>> <> encode_struct_map(map)
+  end
+
+  defp do_encode(map, signature) when is_map(map) and map_size(map) < 65_535 do
+    <<@struct16_marker::8, map_size(map)::16, signature>> <> encode_struct_map(map)
+  end
+
+  # Ordered structs
+  # For this kind of structs, a List is provided
+  # Typically, message will be ordered struct
+  defp do_encode(list, signature) when is_list(list) and length(list) < 16 do
+    <<@tiny_struct_marker::4, length(list)::4, signature>> <> encode_struct_list(list)
+  end
+
+  defp do_encode(list, signature) when is_list(list) and length(list) < 256 do
+    <<@struct8_marker::8, length(list)::8, signature>> <> encode_struct_list(list)
+  end
+
+  defp do_encode(list, signature) when is_list(list) and length(list) < 65_535 do
+    <<@struct16_marker::8, length(list)::16, signature>> <> encode_struct_list(list)
+  end
+
+  defp encode_struct_map(data) do
+    data
+    |> Map.from_struct()
+    |> Boltex.PackStream.Encoder.encode()
+  end
+
+  defp encode_struct_list(data) do
+    data
+    |> Enum.map_join("", &Boltex.PackStream.Encoder.encode/1)
   end
 end
