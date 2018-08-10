@@ -1,5 +1,3 @@
-alias Boltex.PackStream.Message.{AckFailure, DiscardAll, Init, PullAll, Reset, Run}
-
 defprotocol Boltex.PackStream.Encoder do
   @doc "Encodes an item to its binary PackStream Representation"
 
@@ -153,37 +151,6 @@ defimpl Boltex.PackStream.Encoder, for: Map do
 
   defp do_reduce_kv({key, value}) do
     Boltex.PackStream.Encoder.encode(key) <> Boltex.PackStream.Encoder.encode(value)
-  end
-end
-
-defimpl Boltex.PackStream.Encoder, for: [AckFailure, DiscardAll, Init, PullAll, Reset, Run] do
-  @max_chunk_size 65_535
-  @end_marker <<0x00, 0x00>>
-
-  def encode(data) do
-    Boltex.PackStream.Encoder.encode({@for.signature, @for.list_data(data)})
-    |> generate_chunks()
-  end
-
-  defp generate_chunks(data, chunks \\ [])
-
-  defp generate_chunks(data, chunks) when byte_size(data) > @max_chunk_size do
-    <<chunk::binary-@max_chunk_size, rest::binary>> = data
-    generate_chunks(rest, [format_chunk(chunk) | chunks])
-  end
-
-  defp generate_chunks(<<>>, chunks) do
-    [@end_marker | chunks]
-    |> Enum.reverse()
-    |> Enum.join()
-  end
-
-  defp generate_chunks(data, chunks) do
-    generate_chunks(<<>>, [format_chunk(data) | chunks])
-  end
-
-  defp format_chunk(chunk) do
-    <<byte_size(chunk)::16>> <> chunk
   end
 end
 
