@@ -47,7 +47,7 @@ defmodule Boltex.Error do
     """
   end
 
-  defp message_for(:hadshake, other) do
+  defp message_for(:handshake, other) do
     """
     Handshake failed.
     Expected 01:00:00:00 as a result, received: #{inspect(other)}.
