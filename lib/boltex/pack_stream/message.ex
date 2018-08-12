@@ -74,9 +74,15 @@ defmodule Boltex.PackStream.Message do
   end
 
   defp do_encode(message_type, data) do
-    {signature(message_type), data}
-    |> Boltex.PackStream.Encoder.encode()
-    |> generate_chunks()
+    Boltex.Logger.log_message(:client, message_type, data)
+
+    encoded =
+      {signature(message_type), data}
+      |> Boltex.PackStream.Encoder.encode()
+      |> generate_chunks()
+
+    Boltex.Logger.log_message(:client, message_type, encoded, :hex)
+    encoded
   end
 
   defp auth_params({}), do: %{}
