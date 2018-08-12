@@ -18,6 +18,14 @@ defmodule Boltex.PackStream.Message do
   @record_signature 0x71
   @ignored_signature 0x7E
 
+  def encode_message({message_type, []}) do
+    encode(message_type)
+  end
+
+  def encode_message({message_type, data}) do
+    Kernel.apply(__MODULE__, :encode, [message_type | data])
+  end
+
   @doc """
   Encode INIT message without auth token
 
