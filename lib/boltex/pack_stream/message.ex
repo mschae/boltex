@@ -4,12 +4,19 @@ defmodule Boltex.PackStream.Message do
   @max_chunk_size 65_535
   @end_marker <<0x00, 0x00>>
 
+  @tiny_struct_marker 0xB
+
   @ack_failure_signature 0x0E
   @discard_all_signature 0x2F
   @init_signature 0x01
   @pull_all_signature 0x3F
   @reset_signature 0x0F
   @run_signature 0x10
+
+  @success_signature 0x70
+  @failure_signature 0x7F
+  @record_signature 0x71
+  @ignored_signature 0x7E
 
   @doc """
   Encode INIT message without auth token
@@ -121,5 +128,49 @@ defmodule Boltex.PackStream.Message do
 
   defp format_chunk(chunk) do
     <<byte_size(chunk)::16>> <> chunk
+  end
+
+  @doc """
+  Decode SUCCESS message
+  """
+  def decode(<<@tiny_struct_marker::4, nb_entries::4, @success_signature, data::binary>>) do
+    build_response(:success, data, nb_entries)
+  end
+
+  @doc """
+  Decode FAILURE message
+  """
+  def decode(<<@tiny_struct_marker::4, nb_entries::4, @failure_signature, data::binary>>) do
+    build_response(:failure, data, nb_entries)
+  end
+
+  @doc """
+  Decode RECORD message
+  """
+  def decode(<<@tiny_struct_marker::4, nb_entries::4, @record_signature, data::binary>>) do
+    build_response(:record, data, nb_entries)
+  end
+
+  @doc """
+  Decode IGNORED message
+  """
+  def decode(<<@tiny_struct_marker::4, nb_entries::4, @ignored_signature, data::binary>>) do
+    build_response(:ignored, data, nb_entries)
+  end
+
+  defp build_response(message_type, data, nb_entries) do
+    Boltex.Logger.log_message(:server, message_type, data, :hex)
+
+    response =
+      case Boltex.PackStream.decode(data) do
+        response when nb_entries == 1 ->
+          List.first(response)
+
+        responses ->
+          responses
+      end
+
+    Boltex.Logger.log_message(:server, message_type, response)
+    {message_type, response}
   end
 end
