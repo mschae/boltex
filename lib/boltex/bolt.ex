@@ -88,7 +88,7 @@ defmodule Boltex.Bolt do
       {:ok, info}
   """
   def init(transport, port, auth \\ {}, options \\ []) do
-    send_messages(transport, port, [{:init, [auth]}])
+    send_message(transport, port, {:init, [auth]})
 
     case receive_data(transport, port, options) do
       {:success, info} ->
@@ -103,14 +103,14 @@ defmodule Boltex.Bolt do
   end
 
   @doc """
-  Sends a list of messages using the Bolt protocol and PackStream encoding.
+  Sends a message using the Bolt protocol and PackStream encoding.
 
-  Messages have to be in the form of {message_type, [data]}.
+  Message have to be in the form of {message_type, [data]}.
   """
-  def send_messages(transport, port, messages) do
-    messages
-    |> Enum.map(&Message.encode/1)
-    |> Enum.each(&transport.send(port, &1))
+  def send_message(transport, port, message) do
+    message
+    |> Message.encode()
+    |> (fn data -> transport.send(port, data) end).()
   end
 
   @doc """
@@ -136,9 +136,9 @@ defmodule Boltex.Bolt do
   def run_statement(transport, port, statement, params \\ %{}, options \\ []) do
     data = [statement, params]
 
-    with :ok <- send_messages(transport, port, [{:run, data}]),
+    with :ok <- send_message(transport, port, {:run, data}),
          {:success, _} = data <- receive_data(transport, port, options),
-         :ok <- send_messages(transport, port, [{:pull_all, []}]),
+         :ok <- send_message(transport, port, {:pull_all, []}),
          more_data <- receive_data(transport, port, options),
          more_data = List.wrap(more_data),
          {:success, _} <- List.last(more_data) do
@@ -166,7 +166,7 @@ defmodule Boltex.Bolt do
   See "Shared options" in the documentation of this module.
   """
   def ack_failure(transport, port, options \\ []) do
-    send_messages(transport, port, [{:ack_failure, []}])
+    send_message(transport, port, {:ack_failure, []})
 
     case receive_data(transport, port, options) do
       {:success, %{}} -> :ok
@@ -185,7 +185,7 @@ defmodule Boltex.Bolt do
   See "Shared options" in the documentation of this module.
   """
   def reset(transport, port, options \\ []) do
-    send_messages(transport, port, [{:reset, []}])
+    send_message(transport, port, {:reset, []})
 
     case receive_data(transport, port, options) do
       {:success, %{}} -> :ok
