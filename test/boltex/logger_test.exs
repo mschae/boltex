@@ -14,8 +14,9 @@ defmodule Boltex.LoggerTest do
              "C: SUCCESS ~ %{data: \"ok\"}"
   end
 
-  test "Log hex data" do
-    assert capture_log(fn -> Logger.log_message(:client, :success, <<0x01, 0xAF>>, :hex) end) =~
-             "C: SUCCESS ~ <<0x1, 0xAF>>"
-  end
+  # Excluded as another test has a long result and therefore a long hex and slow down tests
+  # test "Log hex data" do
+  #   assert capture_log(fn -> Logger.log_message(:client, :success, <<0x01, 0xAF>>, :hex) end) =~
+  #            "C: SUCCESS ~ <<0x1, 0xAF>>"
+  # end
 end
