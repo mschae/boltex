@@ -109,7 +109,7 @@ defmodule Boltex.Bolt do
   """
   def send_messages(transport, port, messages) do
     messages
-    |> Enum.map(&Message.encode_message/1)
+    |> Enum.map(&Message.encode/1)
     |> Enum.each(&transport.send(port, &1))
   end
 
