@@ -1,18 +1,39 @@
 defmodule Boltex.Logger do
+  @moduledoc """
+  Designed to log Bolt protocol message between Client and Server.
+
+  The `from' paramater must be a atom, either `:client` or `:server`
+  """
   require Logger
 
   @doc """
-  Produces a formatted Log
+  Produces a formatted Log for a message
+
+  ## Example
+      iex> Logger.log_message(:client, {:init, []})
   """
   def log_message(from, {type, data}) do
     msg_type = type |> Atom.to_string() |> String.upcase()
     do_log_message(from, fn -> "#{msg_type} ~ #{inspect(data)}" end)
   end
 
+  @doc """
+  Produces a formatted Log
+
+  ## Example
+      iex> Logger.log_message(:server, :handshake, 2)
+  """
   def log_message(from, type, data) do
     log_message(from, {type, data})
   end
 
+  @doc """
+  Produces a formatted Log for a message
+  Data will be output in hexadecimal
+
+  ## Example
+      iex> Logger.log_message(:server, :handshake, <<0x02>>)
+  """
   def log_message(from, type, data, :hex) do
     if Application.get_env(:boltex, :log_hex, false) do
       msg_type = type |> Atom.to_string() |> String.upcase()
