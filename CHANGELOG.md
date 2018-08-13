@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.5.0
+
+* Fixes
+  * Typo in errors
+  * Send only one messag at a time
+* Improvment
+  * Bolt v2 support
+  * Message encoding / decoding at first decode stage
+  * Message logging
+
 ## v0.4.1
 
 * Fixes
