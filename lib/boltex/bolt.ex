@@ -1,27 +1,15 @@
 defmodule Boltex.Bolt do
-  alias Boltex.{Utils, PackStream, Error}
+  alias Boltex.Error
+  alias Boltex.PackStream.Message
   require Logger
 
   @recv_timeout 10_000
-  @max_chunk_size 65_535
 
-  @user_agent "Boltex/0.4.1"
   @hs_magic <<0x60, 0x60, 0xB0, 0x17>>
-  @hs_version <<1::32, 0::32, 0::32, 0::32>>
 
-  def user_agent, do: @user_agent
+  @zero_chunk <<0x00, 0x00>>
 
-  @zero_chunk <<0, 0>>
-
-  @sig_init 0x01
-  @sig_ack_failure 0x0E
-  @sig_reset 0x0F
-  @sig_run 0x10
-  @sig_pull_all 0x3F
-  @sig_success 0x70
-  @sig_record 0x71
-  @sig_ignored 0x7E
-  @sig_failure 0x7F
+  @max_version 2
 
   @summary ~w(success ignored failure)a
 
@@ -51,10 +39,26 @@ defmodule Boltex.Bolt do
   def handshake(transport, port, options \\ []) do
     recv_timeout = get_recv_timeout(options)
 
-    transport.send(port, @hs_magic <> @hs_version)
+    # Define version list. Should be a 4 integer list
+    # Example: [1, 0, 0, 0]
+    versions =
+      ((@max_version..0
+        |> Enum.into([])) ++ [0, 0, 0])
+      |> Enum.take(4)
+
+    Boltex.Logger.log_message(
+      :client,
+      :handshake,
+      "#{inspect(@hs_magic, base: :hex)} #{inspect(versions)}"
+    )
+
+    data = @hs_magic <> Enum.into(versions, <<>>, fn version_ -> <<version_::32>> end)
+    transport.send(port, data)
 
     case transport.recv(port, 4, recv_timeout) do
-      {:ok, <<1::32>>} ->
+      {:ok, <<version::32>> = packet} when version <= @max_version ->
+        Boltex.Logger.log_message(:server, :handshake, packet, :hex)
+        Boltex.Logger.log_message(:server, :handshake, version)
         :ok
 
       {:ok, other} ->
@@ -84,8 +88,7 @@ defmodule Boltex.Bolt do
       {:ok, info}
   """
   def init(transport, port, auth \\ {}, options \\ []) do
-    params = auth_params(auth)
-    send_messages(transport, port, [{[@user_agent, params], @sig_init}])
+    send_message(transport, port, {:init, [auth]})
 
     case receive_data(transport, port, options) do
       {:success, info} ->
@@ -99,60 +102,15 @@ defmodule Boltex.Bolt do
     end
   end
 
-  defp auth_params({}), do: %{}
-
-  defp auth_params({username, password}) do
-    %{
-      scheme: "basic",
-      principal: username,
-      credentials: password
-    }
-  end
-
   @doc """
-  Sends a list of messages using the Bolt protocol and PackStream encoding.
+  Sends a message using the Bolt protocol and PackStream encoding.
 
-  Messages have to be in the form of {[messages], signature}.
+  Message have to be in the form of {message_type, [data]}.
   """
-  def send_messages(transport, port, messages) do
-    messages
-    |> encode_messages()
-    |> Enum.each(&transport.send(port, &1))
-  end
-
-  def encode_messages(messages) do
-    messages
-    |> Enum.map(&generate_binary_message/1)
-    |> generate_chunks()
-  end
-
-  defp generate_binary_message({messages, signature}) do
-    messages = List.wrap(messages)
-    struct_size = length(messages)
-
-    <<0xB::4, struct_size::4, signature>> <>
-      Utils.reduce_to_binary(messages, &PackStream.encode/1)
-  end
-
-  defp generate_chunks(messages, chunks \\ [])
-
-  defp generate_chunks([], chunks) do
-    Enum.reverse(chunks)
-  end
-
-  defp generate_chunks([message | messages], chunks)
-       when byte_size(message) <= @max_chunk_size do
-    message_size = byte_size(message)
-    chunk = <<message_size::16>> <> message <> @zero_chunk
-
-    generate_chunks(messages, [chunk | chunks])
-  end
-
-  defp generate_chunks([message | messages], chunks) do
-    <<split::binary-size(@max_chunk_size)>> <> rest = message
-    chunk = <<@max_chunk_size::16>> <> split
-
-    generate_chunks([rest | messages], [chunk | chunks])
+  def send_message(transport, port, message) do
+    message
+    |> Message.encode()
+    |> (fn data -> transport.send(port, data) end).()
   end
 
   @doc """
@@ -176,11 +134,11 @@ defmodule Boltex.Bolt do
       ]
   """
   def run_statement(transport, port, statement, params \\ %{}, options \\ []) do
-    message = [statement, params]
+    data = [statement, params]
 
-    with :ok <- send_messages(transport, port, [{message, @sig_run}]),
+    with :ok <- send_message(transport, port, {:run, data}),
          {:success, _} = data <- receive_data(transport, port, options),
-         :ok <- send_messages(transport, port, [{[], @sig_pull_all}]),
+         :ok <- send_message(transport, port, {:pull_all, []}),
          more_data <- receive_data(transport, port, options),
          more_data = List.wrap(more_data),
          {:success, _} <- List.last(more_data) do
@@ -208,9 +166,7 @@ defmodule Boltex.Bolt do
   See "Shared options" in the documentation of this module.
   """
   def ack_failure(transport, port, options \\ []) do
-    send_messages(transport, port, [
-      {[], @sig_ack_failure}
-    ])
+    send_message(transport, port, {:ack_failure, []})
 
     case receive_data(transport, port, options) do
       {:success, %{}} -> :ok
@@ -229,9 +185,7 @@ defmodule Boltex.Bolt do
   See "Shared options" in the documentation of this module.
   """
   def reset(transport, port, options \\ []) do
-    send_messages(transport, port, [
-      {[], @sig_reset}
-    ])
+    send_message(transport, port, {:reset, []})
 
     case receive_data(transport, port, options) do
       {:success, %{}} -> :ok
@@ -268,7 +222,7 @@ defmodule Boltex.Bolt do
   """
   def receive_data(transport, port, options \\ [], previous \\ []) do
     with {:ok, data} <- do_receive_data(transport, port, options) do
-      case unpack(data) do
+      case Message.decode(data) do
         {:record, _} = data ->
           receive_data(transport, port, options, [data | previous])
 
@@ -315,28 +269,6 @@ defmodule Boltex.Bolt do
     else
       other ->
         Error.exception(other, port, :recv)
-    end
-  end
-
-  @doc """
-  Unpacks (or in other words parses) a message.
-  """
-  def unpack(<<0x0B::4, packages::4, status, message::binary>>) do
-    response =
-      case PackStream.decode(message) do
-        response when packages == 1 ->
-          List.first(response)
-
-        responses ->
-          responses
-      end
-
-    case status do
-      @sig_success -> {:success, response}
-      @sig_record -> {:record, response}
-      @sig_ignored -> {:ignored, response}
-      @sig_failure -> {:failure, response}
-      other -> raise "Couldn't decode #{Utils.hex_encode(<<other>>)}"
     end
   end
 

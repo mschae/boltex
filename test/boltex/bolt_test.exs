@@ -82,8 +82,189 @@ defmodule Boltex.BoltTest do
   test "an invalid parameter value yields an error", %{port: port} do
     cypher = "MATCH (n:Person {invalid: {an_elixir_datetime}}) RETURN TRUE"
 
-    assert_raise Boltex.PackStream.EncodeError, ~r/^unable to encode value: {\d+, \d+}/i, fn ->
+    assert_raise Boltex.PackStream.EncodeError, ~r/^unable to encode value: /i, fn ->
       Bolt.run_statement(:gen_tcp, port, cypher, %{an_elixir_datetime: DateTime.utc_now()})
     end
+  end
+
+  test "Temporal / patial types does not work prior to Neo4j 3.4", %{
+    port: port,
+    is_bolt_v2: is_bolt_v2
+  } do
+    test_bolt_v2(port, is_bolt_v2)
+  end
+
+  @doc """
+  Test valid returns for Bolt V1.
+  """
+  def test_bolt_v2(port, false) do
+    assert %Boltex.Error{type: :cypher_error} =
+             Bolt.run_statement(:gen_tcp, port, "RETURN date('2018-01-01') as d")
+
+    :ok = Bolt.ack_failure(:gen_tcp, port)
+
+    assert %Boltex.Error{type: :cypher_error} =
+             Bolt.run_statement(:gen_tcp, port, "RETURN time('12:45:30.25+01:00') AS t")
+
+    :ok = Bolt.ack_failure(:gen_tcp, port)
+
+    assert %Boltex.Error{type: :cypher_error} =
+             Bolt.run_statement(:gen_tcp, port, "RETURN local_time('12:45:30.25') AS t")
+
+    :ok = Bolt.ack_failure(:gen_tcp, port)
+
+    assert %Boltex.Error{type: :cypher_error} =
+             Bolt.run_statement(:gen_tcp, port, "RETURN duration('P1Y3M34DT54.00000555S') AS d")
+
+    :ok = Bolt.ack_failure(:gen_tcp, port)
+
+    assert %Boltex.Error{type: :cypher_error} =
+             Bolt.run_statement(
+               :gen_tcp,
+               port,
+               "RETURN localdatetime('2018-04-05T12:34:00.543') AS d"
+             )
+
+    :ok = Bolt.ack_failure(:gen_tcp, port)
+
+    assert %Boltex.Error{type: :cypher_error} =
+             Bolt.run_statement(
+               :gen_tcp,
+               port,
+               "RETURN datetime('2018-04-05T12:34:23.543+01:00') AS d"
+             )
+
+    :ok = Bolt.ack_failure(:gen_tcp, port)
+
+    assert %Boltex.Error{type: :cypher_error} =
+             Bolt.run_statement(
+               :gen_tcp,
+               port,
+               "RETURN datetime('2018-04-05T12:34:23.543[Europe/Berlin]') AS d"
+             )
+
+    :ok = Bolt.ack_failure(:gen_tcp, port)
+
+    assert %Boltex.Error{type: :cypher_error} =
+             Bolt.run_statement(:gen_tcp, port, "RETURN point({x: 40, y: 45}) AS p")
+
+    :ok = Bolt.ack_failure(:gen_tcp, port)
+
+    assert %Boltex.Error{type: :cypher_error} =
+             Bolt.run_statement(
+               :gen_tcp,
+               port,
+               "RETURN point({longitude: 40, latitude: 45}) AS p"
+             )
+
+    :ok = Bolt.ack_failure(:gen_tcp, port)
+
+    assert %Boltex.Error{type: :cypher_error} =
+             Bolt.run_statement(:gen_tcp, port, "RETURN point({x: 40, y: 45, z: 150}) AS p")
+
+    :ok = Bolt.ack_failure(:gen_tcp, port)
+
+    assert %Boltex.Error{type: :cypher_error} =
+             Bolt.run_statement(
+               :gen_tcp,
+               port,
+               "RETURN point({longitude: 40, latitude: 45, height: 150}) AS p"
+             )
+  end
+
+  @doc """
+  Test valid returns for Bolt V2.
+  """
+  def test_bolt_v2(port, true) do
+    assert [
+             success: %{"fields" => ["d"], "result_available_after" => _},
+             record: [[sig: 68, fields: [17167]]],
+             success: %{"result_consumed_after" => _, "type" => "r"}
+           ] = Bolt.run_statement(:gen_tcp, port, "RETURN date('2017-01-01') as d")
+
+    assert [
+             success: %{"fields" => ["t"], "result_available_after" => _},
+             record: [[sig: 84, fields: [45_930_250_000_000, 3600]]],
+             success: %{"result_consumed_after" => _, "type" => "r"}
+           ] = Bolt.run_statement(:gen_tcp, port, "RETURN time('12:45:30.25+01:00') AS t")
+
+    assert [
+             success: %{"fields" => ["t"], "result_available_after" => _},
+             record: [[sig: 116, fields: [45_930_250_000_000]]],
+             success: %{"result_consumed_after" => _, "type" => "r"}
+           ] = Bolt.run_statement(:gen_tcp, port, "RETURN localtime('12:45:30.25') AS t")
+
+    assert [
+             success: %{"fields" => ["d"], "result_available_after" => _},
+             record: [[sig: 69, fields: [15, 34, 54, 5550]]],
+             success: %{"result_consumed_after" => _, "type" => "r"}
+           ] = Bolt.run_statement(:gen_tcp, port, "RETURN duration('P1Y3M34DT54.00000555S') AS d")
+
+    assert [
+             success: %{"fields" => ["d"], "result_available_after" => _},
+             record: [[sig: 100, fields: [1_522_931_640, 543_000_000]]],
+             success: %{"result_consumed_after" => _, "type" => "r"}
+           ] =
+             Bolt.run_statement(
+               :gen_tcp,
+               port,
+               "RETURN localdatetime('2018-04-05T12:34:00.543') AS d"
+             )
+
+    assert [
+             success: %{"fields" => ["d"], "result_available_after" => _},
+             record: [[sig: 70, fields: [1_522_931_663, 543_000_000, 3600]]],
+             success: %{"result_consumed_after" => _, "type" => "r"}
+           ] =
+             Bolt.run_statement(
+               :gen_tcp,
+               port,
+               "RETURN datetime('2018-04-05T12:34:23.543+01:00') AS d"
+             )
+
+    assert [
+             success: %{"fields" => ["d"], "result_available_after" => _},
+             record: [[sig: 102, fields: [1_522_931_663, 543_000_000, "Europe/Berlin"]]],
+             success: %{"result_consumed_after" => _, "type" => "r"}
+           ] =
+             Bolt.run_statement(
+               :gen_tcp,
+               port,
+               "RETURN datetime('2018-04-05T12:34:23.543[Europe/Berlin]') AS d"
+             )
+
+    assert [
+             success: %{"fields" => ["p"], "result_available_after" => _},
+             record: [[sig: 88, fields: [7203, 40.0, 45.0]]],
+             success: %{"result_consumed_after" => _, "type" => "r"}
+           ] = Bolt.run_statement(:gen_tcp, port, "RETURN point({x: 40, y: 45}) AS p")
+
+    assert [
+             success: %{"fields" => ["p"], "result_available_after" => _},
+             record: [[sig: 88, fields: [4326, 40.0, 45.0]]],
+             success: %{"result_consumed_after" => _, "type" => "r"}
+           ] =
+             Bolt.run_statement(
+               :gen_tcp,
+               port,
+               "RETURN point({longitude: 40, latitude: 45}) AS p"
+             )
+
+    assert [
+             success: %{"fields" => ["p"], "result_available_after" => _},
+             record: [[sig: 89, fields: [9157, 40.0, 45.0, 150.0]]],
+             success: %{"result_consumed_after" => _, "type" => "r"}
+           ] = Bolt.run_statement(:gen_tcp, port, "RETURN point({x: 40, y: 45, z: 150}) AS p")
+
+    assert [
+             success: %{"fields" => ["p"], "result_available_after" => _},
+             record: [[sig: 89, fields: [4979, 40.0, 45.0, 150.0]]],
+             success: %{"result_consumed_after" => _, "type" => "r"}
+           ] =
+             Bolt.run_statement(
+               :gen_tcp,
+               port,
+               "RETURN point({longitude: 40, latitude: 45, height: 150}) AS p"
+             )
   end
 end
