@@ -11,6 +11,8 @@ defimpl Boltex.PackStream.Encoder, for: Atom do
   @true_marker 0xC3
   @false_marker 0xC2
 
+  @doc "Encode Integer"
+  @spec encode(atom()) :: Boltex.PackStream.value()
   def encode(nil), do: <<@null_marker>>
   def encode(true), do: <<@true_marker>>
   def encode(false), do: <<@false_marker>>
@@ -36,6 +38,7 @@ defimpl Boltex.PackStream.Encoder, for: Integer do
   @int64_low -9_223_372_036_854_775_808..-2_147_483_649
   @int64_high 2_147_483_648..9_223_372_036_854_775_807
 
+  @spec encode(integer()) :: Boltex.PackStream.value()
   def encode(integer) when integer in -16..127 do
     <<integer>>
   end
@@ -60,6 +63,7 @@ end
 defimpl Boltex.PackStream.Encoder, for: Float do
   @float_marker 0xC1
 
+  @spec encode(float()) :: Boltex.PackStream.value()
   def encode(number) do
     <<@float_marker, number::float>>
   end
@@ -71,8 +75,10 @@ defimpl Boltex.PackStream.Encoder, for: BitString do
   @bitstring16_marker 0xD1
   @bitstring32_marker 0xD2
 
+  @spec encode(String.t()) :: Boltex.PackStream.value()
   def encode(string), do: do_encode(string, byte_size(string))
 
+  @spec do_encode(String.t(), integer()) :: Boltex.PackStream.value()
   defp do_encode(string, size) when size <= 15 do
     <<@tiny_bitstring_marker::4, size::4>> <> string
   end
@@ -96,12 +102,14 @@ defimpl Boltex.PackStream.Encoder, for: List do
   @list16_marker 0xD5
   @list32_marker 0xD6
 
+  @spec encode([term()]) :: Boltex.PackStream.value()
   def encode(list) do
     binary = Enum.map_join(list, &Boltex.PackStream.Encoder.encode/1)
 
     do_encode(binary, length(list))
   end
 
+  @spec do_encode(binary(), integer()) :: Boltex.PackStream.value()
   defp do_encode(binary, list_size) when list_size <= 15 do
     <<@tiny_list_marker::4, list_size::4>> <> binary
   end
@@ -125,10 +133,12 @@ defimpl Boltex.PackStream.Encoder, for: Map do
   @map16_marker 0xD9
   @map32_marker 0xDA
 
+  @spec encode(map()) :: Boltex.PackStream.value()
   def encode(map) do
     do_encode(map, map_size(map))
   end
 
+  @spec do_encode(map(), integer) :: Boltex.PackStream.value()
   defp do_encode(map, size) when size <= 15 do
     <<@tiny_map_marker::4, size::4>> <> encode_kv(map)
   end
@@ -145,10 +155,12 @@ defimpl Boltex.PackStream.Encoder, for: Map do
     <<@map32_marker, size::32>> <> encode_kv(map)
   end
 
+  @spec encode_kv(map()) :: binary()
   defp encode_kv(map) do
     Boltex.Utils.reduce_to_binary(map, &do_reduce_kv/1)
   end
 
+  @spec do_reduce_kv({atom(), term()}) :: binary()
   defp do_reduce_kv({key, value}) do
     Boltex.PackStream.Encoder.encode(key) <> Boltex.PackStream.Encoder.encode(value)
   end
@@ -161,6 +173,8 @@ defimpl Boltex.PackStream.Encoder, for: Any do
 
   @valid_signatures 0..127
 
+  @spec encode({integer(), %{:__struct__ => String.t()} | list()}) ::
+          Boltex.PackStream.value() | <<_::16, _::_*8>>
   def encode({signature, %{__struct__: _} = data}) when signature in @valid_signatures do
     do_encode(data, signature)
   end
@@ -175,6 +189,7 @@ defimpl Boltex.PackStream.Encoder, for: Any do
 
   # Unordered structs
   # For this kind of structs, a Map is provided
+  @spec do_encode(map() | list(), integer()) :: Boltex.PackStream.value() | <<_::16, _::_*8>>
   defp do_encode(map, signature) when is_map(map) and map_size(map) < 16 do
     <<@tiny_struct_marker::4, map_size(map)::4, signature>> <> encode_struct_map(map)
   end
@@ -202,12 +217,14 @@ defimpl Boltex.PackStream.Encoder, for: Any do
     <<@struct16_marker::8, length(list)::16, signature>> <> encode_struct_list(list)
   end
 
+  @spec encode_struct_map(map()) :: Boltex.PackStream.value()
   defp encode_struct_map(data) do
     data
     |> Map.from_struct()
     |> Boltex.PackStream.Encoder.encode()
   end
 
+  @spec encode_struct_map(list()) :: Boltex.PackStream.value()
   defp encode_struct_list(data) do
     data
     |> Enum.map_join("", &Boltex.PackStream.Encoder.encode/1)

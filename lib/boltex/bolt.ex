@@ -36,6 +36,7 @@ defmodule Boltex.Bolt do
 
   See "Shared options" in the documentation of this module.
   """
+  @spec handshake(atom(), port(), Keyword.t()) :: :ok | {:error, Boltex.Error.t()}
   def handshake(transport, port, options \\ []) do
     recv_timeout = get_recv_timeout(options)
 
@@ -87,6 +88,7 @@ defmodule Boltex.Bolt do
       iex> Boltex.Bolt.init :gen_tcp, port, {"username", "password"}
       {:ok, info}
   """
+  @spec init(atom(), port(), tuple(), Keyword.t()) :: {:ok, any()} | {:error, Boltex.Error.t()}
   def init(transport, port, auth \\ {}, options \\ []) do
     send_message(transport, port, {:init, [auth]})
 
@@ -107,6 +109,7 @@ defmodule Boltex.Bolt do
 
   Message have to be in the form of {message_type, [data]}.
   """
+  @spec send_message(atom(), port(), Boltex.PackStream.Message.raw()) :: :ok | {:error, any()}
   def send_message(transport, port, message) do
     message
     |> Message.encode()
@@ -133,6 +136,11 @@ defmodule Boltex.Bolt do
         {:success, %{"type" => "r"}}
       ]
   """
+  @spec run_statement(atom(), port(), String.t(), map(), Keyword.t()) ::
+          [
+            Boltex.PackStream.Message.decoded()
+          ]
+          | Boltex.Error.t()
   def run_statement(transport, port, statement, params \\ %{}, options \\ []) do
     data = [statement, params]
 
@@ -165,6 +173,7 @@ defmodule Boltex.Bolt do
 
   See "Shared options" in the documentation of this module.
   """
+  @spec ack_failure(atom(), port(), Keyword.t()) :: :ok | Boltex.Error.t()
   def ack_failure(transport, port, options \\ []) do
     send_message(transport, port, {:ack_failure, []})
 
@@ -184,6 +193,7 @@ defmodule Boltex.Bolt do
 
   See "Shared options" in the documentation of this module.
   """
+  @spec reset(atom(), port(), Keyword.t()) :: :ok | Boltex.Error.t()
   def reset(transport, port, options \\ []) do
     send_message(transport, port, {:reset, []})
 
@@ -220,6 +230,8 @@ defmodule Boltex.Bolt do
 
   See "Shared options" in the documentation of this module.
   """
+  @spec receive_data(atom(), port(), Keyword.t(), list()) ::
+          {atom(), Boltex.PackStream.value()} | {:error, any()}
   def receive_data(transport, port, options \\ [], previous \\ []) do
     with {:ok, data} <- do_receive_data(transport, port, options) do
       case Message.decode(data) do
@@ -237,23 +249,28 @@ defmodule Boltex.Bolt do
       end
     else
       other ->
+        # Should be the line below to have a cleaner typespec
+        # Keep the old return value to not break usage
+        # {:error, Error.exception(other, port, :receive_data)}
         Error.exception(other, port, :receive_data)
     end
   end
 
+  @spec do_receive_data(atom(), port(), Keyword.t()) :: {:ok, binary()}
   defp do_receive_data(transport, port, options) do
     recv_timeout = get_recv_timeout(options)
 
     case transport.recv(port, 2, recv_timeout) do
       {:ok, <<chunk_size::16>>} ->
-        do_receive_data(transport, port, chunk_size, options, <<>>)
+        do_receive_data_(transport, port, chunk_size, options, <<>>)
 
       other ->
         other
     end
   end
 
-  defp do_receive_data(transport, port, chunk_size, options, old_data) do
+  @spec do_receive_data_(atom(), port(), integer(), Keyword.t(), binary()) :: {:ok, binary()}
+  defp do_receive_data_(transport, port, chunk_size, options, old_data) do
     recv_timeout = get_recv_timeout(options)
 
     with {:ok, data} <- transport.recv(port, chunk_size, recv_timeout),
@@ -264,7 +281,7 @@ defmodule Boltex.Bolt do
 
         <<chunk_size::16>> ->
           data = old_data <> data
-          do_receive_data(transport, port, chunk_size, options, data)
+          do_receive_data_(transport, port, chunk_size, options, data)
       end
     else
       other ->
@@ -272,6 +289,7 @@ defmodule Boltex.Bolt do
     end
   end
 
+  @spec get_recv_timeout(Keyword.t()) :: integer()
   defp get_recv_timeout(options) do
     Keyword.get(options, :recv_timeout, @recv_timeout)
   end

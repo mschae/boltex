@@ -2,7 +2,7 @@ defmodule Boltex.Logger do
   @moduledoc """
   Designed to log Bolt protocol message between Client and Server.
 
-  The `from' paramater must be a atom, either `:client` or `:server`
+  The `from` parameter must be a atom, either `:client` or `:server`
   """
   require Logger
 

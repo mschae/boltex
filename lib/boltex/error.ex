@@ -1,8 +1,17 @@
 defmodule Boltex.Error do
   defexception [:message, :code, :connection_id, :function, :type]
 
+  @type t :: %__MODULE__{
+          message: String.t(),
+          code: nil | any(),
+          connection_id: nil | integer(),
+          function: atom(),
+          type: atom()
+        }
+
   alias Boltex.Utils
 
+  @spec exception(any(), port(), atom()) :: Boltex.Error.t()
   def exception(%{"message" => message, "code" => code}, pid, function) do
     %Boltex.Error{
       message: message,
@@ -31,6 +40,7 @@ defmodule Boltex.Error do
     }
   end
 
+  @spec message_for(nil | atom(), any()) :: String.t()
   defp message_for(:handshake, "HTTP") do
     """
     Handshake failed.
@@ -80,6 +90,7 @@ defmodule Boltex.Error do
     """
   end
 
+  @spec get_id(any()) :: nil | integer()
   defp get_id({:sslsocket, {:gen_tcp, port, _tls, _unused_yet}, _pid}) do
     get_id(port)
   end

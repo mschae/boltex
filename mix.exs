@@ -13,7 +13,8 @@ defmodule Boltex.Mixfile do
       package: package(),
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: preferred_cli_env(),
-      deps: deps()
+      deps: deps(),
+      dialyzer: [ignore_warnings: "dialyzer.ignore-warnings"]
     ]
   end
 
@@ -42,7 +43,8 @@ defmodule Boltex.Mixfile do
   defp deps do
     [
       {:credo, "~> 0.9", only: [:dev, :test]},
-      {:ex_doc, "~> 0.18", only: [:dev]},
+      {:dialyxir, "~> 1.0.0-rc.3", only: [:dev], runtime: false},
+      {:ex_doc, "~> 0.19", only: [:dev]},
       {:excoveralls, "~> 0.8", only: [:test]},
       {:inch_ex, "~> 0.5.6", only: [:docs]},
       {:mix_test_watch, "~> 0.6.0", only: [:dev, :test]}

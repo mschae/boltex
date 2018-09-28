@@ -9,6 +9,8 @@ defmodule Boltex.PackStream do
   stream, using the Boltex.PackStream.Encoder protocol.
   """
 
+  @type value :: <<_::8, _::_*8>>
+
   @doc """
   Encodes a list of items into their binary representation.
 
@@ -19,12 +21,15 @@ defmodule Boltex.PackStream do
       iex> Boltex.PackStream.encode "hello world"
       <<0x8B, 0x68, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x77, 0x6F, 0x72, 0x6C, 0x64>>
   """
+  @spec encode({integer(), %{:__struct__ => String.t()} | list()}) ::
+          Boltex.PackStream.value() | <<_::16, _::_*8>>
   def encode(item), do: Boltex.PackStream.Encoder.encode(item)
 
   ##
   # Decode
   @doc "Decodes a binary stream recursively into Elixir data types"
   # Null
+  @spec decode(value()) :: list()
   def decode(<<0xC0, rest::binary>>), do: [nil | decode(rest)]
 
   # Boolean
@@ -96,18 +101,21 @@ defmodule Boltex.PackStream do
     [int | decode(rest)]
   end
 
+  @spec decode_text(binary(), integer()) :: list()
   defp decode_text(bytes, str_length) do
     <<string::binary-size(str_length), rest::binary>> = bytes
 
     [string | decode(rest)]
   end
 
+  @spec map(binary(), integer()) :: list()
   defp map(map, entries) do
     {map, rest} = map |> decode |> Enum.split(entries * 2)
 
     [to_map(map) | rest]
   end
 
+  @spec to_map(list()) :: map()
   defp to_map(map) do
     map
     |> Enum.chunk(2)
@@ -115,6 +123,7 @@ defmodule Boltex.PackStream do
     |> Map.new()
   end
 
+  @spec list(binary(), integer()) :: list()
   defp list(list, list_size) do
     {list, rest} = list |> decode |> Enum.split(list_size)
     [list | rest]

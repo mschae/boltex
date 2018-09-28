@@ -7,6 +7,7 @@ defmodule Boltex.PackStream.EncodeError do
 
   defexception item: nil, message: nil
 
+  @spec message(map()) :: String.t()
   def message(%{item: item, message: nil}) do
     "unable to encode value: #{inspect(item)}"
   end

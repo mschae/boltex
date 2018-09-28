@@ -8,6 +8,7 @@ defmodule Boltex do
 
   alias Boltex.Bolt
 
+  @spec test(charlist(), integer(), String.t(), map(), tuple()) :: list() | Boltex.Error.t()
   def test(host, port, query, params \\ %{}, auth \\ {}) do
     {:ok, p} = :gen_tcp.connect(host, port, active: false, mode: :binary, packet: :raw)
 
