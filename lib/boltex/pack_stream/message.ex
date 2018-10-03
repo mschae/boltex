@@ -1,10 +1,11 @@
 defmodule Boltex.PackStream.Message do
-  @moduledoc """
-  Manage the message encoding and decoding.
+  @moduledoc false
 
-  Message encoding / decoding is the first step of encoding / decoding.
-  The next step is the message data encoding /decoding (which is handled by packstream.ex)
-  """
+  # Manage the message encoding and decoding.
+  #
+  # Message encoding / decoding is the first step of encoding / decoding.
+  # The next step is the message data encoding /decoding (which is handled by packstream.ex)
+
   alias Boltex.PackStream.Message.Encoder
   alias Boltex.PackStream.Message.Decoder
 
@@ -15,7 +16,7 @@ defmodule Boltex.PackStream.Message do
   @type encoded :: <<_::16, _::_*8>>
 
   @doc """
-  Encode a message
+  Encode a message depending on its type
   """
   @spec encode({Boltex.PackStream.Message.out_signature(), list()}) ::
           Boltex.PackStream.Message.encoded()

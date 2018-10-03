@@ -1,4 +1,6 @@
 defmodule Boltex.PackStream.Message.Decoder do
+  @moduledoc false
+
   @tiny_struct_marker 0xB
 
   @success_signature 0x70

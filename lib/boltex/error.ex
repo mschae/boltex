@@ -11,6 +11,8 @@ defmodule Boltex.Error do
 
   alias Boltex.Utils
 
+  @doc false
+  # Produce a Boltex.Error depending on the context.
   @spec exception(any(), port(), atom()) :: Boltex.Error.t()
   def exception(%{"message" => message, "code" => code}, pid, function) do
     %Boltex.Error{

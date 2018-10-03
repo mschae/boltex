@@ -1,13 +1,13 @@
 defmodule Boltex.PackStream do
-  @moduledoc """
-  The PackStream implementation for Bolt.
+  @moduledoc false
 
-  This module defines a decode function, that will take a binary stream of data
-  and recursively turn it into a list of Elixir data types.
-
-  It further defines a function for encoding Elixir data types into a binary
-  stream, using the Boltex.PackStream.Encoder protocol.
-  """
+  # The PackStream implementation for Bolt.
+  #
+  # This module defines a decode function, that will take a binary stream of data
+  # and recursively turn it into a list of Elixir data types.
+  #
+  # It further defines a function for encoding Elixir data types into a binary
+  # stream, using the Boltex.PackStream.Encoder protocol.
 
   @type value :: <<_::8, _::_*8>>
 

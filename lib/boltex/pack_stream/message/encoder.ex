@@ -1,13 +1,14 @@
 defmodule Boltex.PackStream.Message.Encoder do
-  @moduledoc """
-  Manages the message encoding.
+  @moduledoc false
 
-  A mesage is a tuple formated as:
-  `{message_type, data}`
-  with:
-    - message_type: atom amongst the valid message type (:init, :discard_all, :pull_all, :ack_failure, :reset, :run)
-    - data: a list of data to be used by the message
-  """
+  # Manages the message encoding.
+
+  # A mesage is a tuple formated as:
+  # `{message_type, data}`
+  # with:
+  #   - message_type: atom amongst the valid message type (:init, :discard_all, :pull_all, :ack_failure, :reset, :run)
+  #   - data: a list of data to be used by the message
+
   @client_name "Boltex/0.5.0"
 
   @max_chunk_size 65_535

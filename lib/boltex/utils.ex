@@ -1,5 +1,7 @@
 defmodule Boltex.Utils do
-  @moduledoc "Different utils used to debugging and helping."
+  @moduledoc false
+
+  # Different utils used to debugging and helping.
 
   @spec reduce_to_binary(Enum.t(), function()) :: binary()
   def reduce_to_binary(enumerable, transform) do

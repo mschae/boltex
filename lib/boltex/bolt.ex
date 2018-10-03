@@ -18,8 +18,8 @@ defmodule Boltex.Bolt do
   handshake, init) as well as sending and receiving messages and wrapping
   them in chunks.
 
-  It abstracts transportation, expecing the transport layer to define
-  send/2 and recv/3 analogous to :gen_tcp.
+  It abstracts transportation, expecting the transport layer to define
+  `send/2` and `recv/3` analogous to `:gen_tcp`.
 
   ## Shared options
 
@@ -104,11 +104,10 @@ defmodule Boltex.Bolt do
     end
   end
 
-  @doc """
-  Sends a message using the Bolt protocol and PackStream encoding.
-
-  Message have to be in the form of {message_type, [data]}.
-  """
+  @doc false
+  # Sends a message using the Bolt protocol and PackStream encoding.
+  #
+  # Message have to be in the form of {message_type, [data]}.
   @spec send_message(atom(), port(), Boltex.PackStream.Message.raw()) :: :ok | {:error, any()}
   def send_message(transport, port, message) do
     message
@@ -118,10 +117,10 @@ defmodule Boltex.Bolt do
 
   @doc """
   Runs a statement (most likely Cypher statement) and returns a list of the
-  records and a summary.
+  records and a summary (Act as as a RUN + PULL_ALL).
 
   Records are represented using PackStream's record data type. Their Elixir
-  representation is a Keyword with the indexse `:sig` and `:fields`.
+  representation is a Keyword with the indexes `:sig` and `:fields`.
 
   ## Options
 
@@ -203,33 +202,32 @@ defmodule Boltex.Bolt do
     end
   end
 
-  @doc """
-  Receives data.
-
-  This function is supposed to be called after a request to the server has been
-  made. It receives data chunks, mends them (if they were split between frames)
-  and decodes them using PackStream.
-
-  When just a single message is received (i.e. to acknowledge a command), this
-  function returns a tuple with two items, the first being the signature and the
-  second being the message(s) itself. If a list of messages is received it will
-  return a list of the former.
-
-  The same goes for the messages: If there was a single data point in a message
-  said data point will be returned by itself. If there were multiple data
-  points, the list will be returned.
-
-  The signature is represented as one of the following:
-
-  * `:success`
-  * `:record`
-  * `:ignored`
-  * `:failure`
-
-  ## Options
-
-  See "Shared options" in the documentation of this module.
-  """
+  @doc false
+  # Receives data.
+  #
+  # This function is supposed to be called after a request to the server has been
+  # made. It receives data chunks, mends them (if they were split between frames)
+  # and decodes them using PackStream.
+  #
+  # When just a single message is received (i.e. to acknowledge a command), this
+  # function returns a tuple with two items, the first being the signature and the
+  # second being the message(s) itself. If a list of messages is received it will
+  # return a list of the former.
+  #
+  # The same goes for the messages: If there was a single data point in a message
+  # said data point will be returned by itself. If there were multiple data
+  # points, the list will be returned.
+  #
+  # The signature is represented as one of the following:
+  #
+  # * `:success`
+  # * `:record`
+  # * `:ignored`
+  # * `:failure`
+  #
+  # ## Options
+  #
+  # See "Shared options" in the documentation of this module.
   @spec receive_data(atom(), port(), Keyword.t(), list()) ::
           {atom(), Boltex.PackStream.value()} | {:error, any()}
   def receive_data(transport, port, options \\ [], previous \\ []) do

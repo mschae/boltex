@@ -1,5 +1,14 @@
 defprotocol Boltex.PackStream.Encoder do
-  @doc "Encodes an item to its binary PackStream Representation"
+  @moduledoc false
+
+  # Encodes an item to its binary PackStream Representation
+  #
+  # Implementation exists for following types:
+  #   - Integer
+  #   - Float
+  #   - List
+  #   - Map
+  #   - Struct (defined in the Bolt protocol)
 
   @fallback_to_any true
 
