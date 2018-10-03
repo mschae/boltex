@@ -26,7 +26,7 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
   1. Add boltex to your list of dependencies in `mix.exs`:
 
         def deps do
-          [{:boltex, "~> a.b.c"}]
+          [{:boltex, "~> 0.5.0"}]
         end
 
   2. Ensure boltex is started before your application:
