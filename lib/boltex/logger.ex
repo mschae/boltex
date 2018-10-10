@@ -23,7 +23,9 @@ defmodule Boltex.Logger do
       iex> Logger.log_message(:server, :handshake, 2)
   """
   def log_message(from, type, data) do
-    log_message(from, {type, data})
+    if Application.get_env(:boltex, :log) do
+      log_message(from, {type, data})
+    end
   end
 
   @doc """
