@@ -9,6 +9,9 @@ protocol. Both is being used by Neo4J.
 This is a very bare-bone protocol implementation. Error handling, acknowledging
 errors, recovering sessions etc. has to be implemented upstream.
 
+The current version supports both version 1 and 2 of Bolt protocol. Version 2 is currently only used by Neo4j and there is no documentation available yet.  
+For v1 documentation see: https://boltprotocol.org/v1/
+
 *Warning: This is currently WIP and only in the wild to gather feedback!*
 
 If you want to use Boltex in production I highly recommend using connection
@@ -23,7 +26,7 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
   1. Add boltex to your list of dependencies in `mix.exs`:
 
         def deps do
-          [{:boltex, "~> a.b.c"}]
+          [{:boltex, "~> 0.5.0"}]
         end
 
   2. Ensure boltex is started before your application:

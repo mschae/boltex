@@ -1,13 +1,14 @@
 defmodule Boltex.PackStream.Message.Encoder do
-  @moduledoc """
-  Manages the message encoding.
+  @moduledoc false
 
-  A mesage is a tuple formated as:
-  `{message_type, data}`
-  with:
-    - message_type: atom amongst the valid message type (:init, :discard_all, :pull_all, :ack_failure, :reset, :run)
-    - data: a list of data to be used by the message
-  """
+  # Manages the message encoding.
+
+  # A mesage is a tuple formated as:
+  # `{message_type, data}`
+  # with:
+  #   - message_type: atom amongst the valid message type (:init, :discard_all, :pull_all, :ack_failure, :reset, :run)
+  #   - data: a list of data to be used by the message
+
   @client_name "Boltex/0.5.0"
 
   @max_chunk_size 65_535
@@ -28,6 +29,8 @@ defmodule Boltex.PackStream.Message.Encoder do
       <<0, 16, 178, 1, 140, 66, 111, 108, 116, 101, 120, 47, 48, 46, 52, 46, 48, 160,
         0, 0>>
   """
+  @spec encode({Boltex.PackStream.Message.out_signature(), list()}) ::
+          Boltex.PackStream.Message.encoded()
   def encode({:init, []}) do
     encode({:init, [{}]})
   end
@@ -81,6 +84,8 @@ defmodule Boltex.PackStream.Message.Encoder do
     do_encode(message_type, data)
   end
 
+  @spec do_encode(Boltex.PackStream.Message.out_signature(), list()) ::
+          Boltex.PackStream.Message.encoded()
   defp do_encode(message_type, data) do
     Boltex.Logger.log_message(:client, message_type, data)
 
@@ -93,6 +98,7 @@ defmodule Boltex.PackStream.Message.Encoder do
     encoded
   end
 
+  @spec auth_params({} | {String.t(), String.t()}) :: map()
   defp auth_params({}), do: %{}
 
   defp auth_params({username, password}) do
@@ -103,6 +109,7 @@ defmodule Boltex.PackStream.Message.Encoder do
     }
   end
 
+  @spec signature(Boltex.PackStream.Message.out_signature()) :: integer()
   defp signature(:ack_failure), do: @ack_failure_signature
   defp signature(:discard_all), do: @discard_all_signature
   defp signature(:init), do: @init_signature
@@ -110,7 +117,9 @@ defmodule Boltex.PackStream.Message.Encoder do
   defp signature(:reset), do: @reset_signature
   defp signature(:run), do: @run_signature
 
-  defp(generate_chunks(data, chunks \\ []))
+  @spec generate_chunks(Boltex.PackStream.value() | <<>>, list()) ::
+          Boltex.PackStream.Message.encoded()
+  defp generate_chunks(data, chunks \\ [])
 
   defp generate_chunks(data, chunks) when byte_size(data) > @max_chunk_size do
     <<chunk::binary-@max_chunk_size, rest::binary>> = data
@@ -127,6 +136,7 @@ defmodule Boltex.PackStream.Message.Encoder do
     generate_chunks(<<>>, [format_chunk(data) | chunks])
   end
 
+  @spec format_chunk(Boltex.PackStream.value()) :: Boltex.PackStream.Message.encoded()
   defp format_chunk(chunk) do
     <<byte_size(chunk)::16>> <> chunk
   end

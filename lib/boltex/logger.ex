@@ -1,9 +1,8 @@
 defmodule Boltex.Logger do
-  @moduledoc """
-  Designed to log Bolt protocol message between Client and Server.
-
-  The `from' paramater must be a atom, either `:client` or `:server`
-  """
+  @moduledoc false
+  # Designed to log Bolt protocol message between Client and Server.
+  #
+  # The `from` parameter must be a atom, either `:client` or `:server`
   require Logger
 
   @doc """
@@ -24,7 +23,9 @@ defmodule Boltex.Logger do
       iex> Logger.log_message(:server, :handshake, 2)
   """
   def log_message(from, type, data) do
-    log_message(from, {type, data})
+    if Application.get_env(:boltex, :log) do
+      log_message(from, {type, data})
+    end
   end
 
   @doc """

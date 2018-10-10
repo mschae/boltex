@@ -1,4 +1,6 @@
 defmodule Boltex.PackStream.Message.Decoder do
+  @moduledoc false
+
   @tiny_struct_marker 0xB
 
   @success_signature 0x70
@@ -9,6 +11,7 @@ defmodule Boltex.PackStream.Message.Decoder do
   @doc """
   Decode SUCCESS message
   """
+  @spec decode(Boltex.PackStream.Message.encoded()) :: Boltex.PackStream.Message.decoded()
   def decode(<<@tiny_struct_marker::4, nb_entries::4, @success_signature, data::binary>>) do
     build_response(:success, data, nb_entries)
   end
@@ -34,6 +37,8 @@ defmodule Boltex.PackStream.Message.Decoder do
     build_response(:ignored, data, nb_entries)
   end
 
+  @spec build_response(Boltex.PackStream.Message.in_signature(), any(), integer()) ::
+          Boltex.PackStream.Message.decoded()
   defp build_response(message_type, data, nb_entries) do
     Boltex.Logger.log_message(:server, message_type, data, :hex)
 
