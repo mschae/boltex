@@ -1,10 +1,12 @@
 defmodule Boltex.Mixfile do
   use Mix.Project
 
+  @version "0.5.0"
+
   def project do
     [
       app: :boltex,
-      version: "0.5.0",
+      version: @version,
       elixir: "~> 1.3",
       elixirc_paths: elixirc_paths(Mix.env()),
       build_embedded: Mix.env() == :prod,
@@ -14,7 +16,8 @@ defmodule Boltex.Mixfile do
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: preferred_cli_env(),
       deps: deps(),
-      dialyzer: [ignore_warnings: "dialyzer.ignore-warnings"]
+      dialyzer: [ignore_warnings: "dialyzer.ignore-warnings"],
+      docs: docs()
     ]
   end
 
@@ -72,6 +75,13 @@ defmodule Boltex.Mixfile do
       "coveralls.post": :test,
       "coveralls.html": :test,
       "coveralls.travis": :test
+    ]
+  end
+
+  defp docs do
+    [
+      main: "Boltex.Bolt",
+      source_ref: "#{@version}"
     ]
   end
 end
