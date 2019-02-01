@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.1
+* Fixes
+  * A struct in a list is now well encoded
+
 ## v0.5.0
 
 * Fixes

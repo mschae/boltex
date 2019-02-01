@@ -11,6 +11,14 @@ defmodule Boltex.PackStreamTest do
     defstruct foo: "bar"
   end
 
+  defmodule TestStruct2 do
+    defstruct name: "", bolt_sips: true
+  end
+
+  defmodule TestUser do
+    defstruct name: "", bolt_sips: true
+  end
+
   ##
   # Encoding
 
@@ -119,6 +127,11 @@ defmodule Boltex.PackStreamTest do
     assert_raise Boltex.PackStream.EncodeError, ~r/^unable to encode value: /i, fn ->
       PackStream.encode({"a", []})
     end
+  end
+
+  test "Bug fix: struct fails to be encodedd if in a list" do
+    assert <<177, 1, 161, 131, 102, 111, 111, 131, 98, 97, 114>> =
+             PackStream.encode({0x01, [%TestStruct{}]})
   end
 
   test "raises an error when trying to encode something we don't know" do
