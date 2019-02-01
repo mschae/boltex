@@ -192,6 +192,10 @@ defimpl Boltex.PackStream.Encoder, for: Any do
     do_encode(data, signature)
   end
 
+  def encode(%{__struct__: _} = data) do
+    encode_struct_map(data)
+  end
+
   def encode(item) do
     raise Boltex.PackStream.EncodeError, item: item
   end
